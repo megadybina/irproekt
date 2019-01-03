@@ -1,4 +1,4 @@
-﻿# Зимин Владислав - "dotaRPG"
+﻿# Зимин Владислав - "karasique"
 ### Группа: 10 - МИ - 2
 ### Электронная почта: vlad_zimin2@mail.ru
 ### VK: www.vk.com/dio_artemovich
@@ -6,7 +6,7 @@
 
 **[ НАЗВАНИЕ ПРОЕКТА ]**
 
-"dotaRPG"
+"karasique" 
 
 **[ ПРОБЛЕМНОЕ ПОЛЕ ]**
 
