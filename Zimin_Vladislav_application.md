@@ -64,7 +64,7 @@ Linux Ubuntu 12.04 и выше:
 **[ ИНСТРУМЕНТЫ РАЗРАБОТКИ ]**
 
 *	Python 3.7
-* Модули discord.py, requests, html2text хранящиеся в каталоге пакетов PyPI
+* Сторонние модули discord.py, requests, html2text и bs4 для python
 
 **[ ЭТАПЫ РАЗРАБОТКИ ]**
 
