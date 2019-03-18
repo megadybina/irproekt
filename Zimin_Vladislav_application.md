@@ -1,7 +1,7 @@
 ﻿# Зимин Владислав - "karasique"
 ### Группа: 10 - МИ - 2
 ### Электронная почта: vlad_zimin2@mail.ru
-### VK: www.vk.com/dio_artemovich
+### VK: https://vk.com/porolonoviy_gusar
 
 
 **[ НАЗВАНИЕ ПРОЕКТА ]**
