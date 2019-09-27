@@ -38,4 +38,4 @@ class MyClient(discord.Client):
    
 
 client = MyClient()
-client.run('NTM3MjcyNjk0MDE4OTMyNzU0.Dyi4yA.mGwmtgWZETx0Tt5RHvvg02BSPmk')
+client.run('codecode')
