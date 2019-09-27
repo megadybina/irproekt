@@ -1,0 +1,2 @@
+{'desc_en':'Make 100/200/300 last hits','desc_ru':'Совершите 100/200/300 ластхитов','comp_time':7200,'rewards':{'gold':['200','400','600'],'exp':['100','200','300']},'target':[100,200,300],'value':{'od':"last_hits",'stratz':"lastHits"},'type':'player'}
+{'desc_en':'Deny 10/30/50 creeps','desc_ru':'Заденайте 10/30/50 крипов','comp_time':7200,'rewards':{'gold':['200','400','600'],'exp':['100','200','300']},'target':[10,30,50],'value':{'od':"denies",'stratz':"denies"},'type':'player'}
