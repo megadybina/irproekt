@@ -1,0 +1,25 @@
+        lang = await client.wait_for_reaction(message=msg)
+        print(lang.user.id)
+        if lang.user.id=="537272694018932754":
+            lang = await client.wait_for_reaction(message=msg)
+            print(str(lang.user))
+            print(lang.reaction.emoji)
+
+
+######
+#play local audio
+'''
+    if message.content.startswith('!testplay'):
+        user=message.author
+        channel=user.voice.channel
+
+        vc=await channel.connect()
+        mus='MAC.mp3'
+        vc.play(discord.FFmpegPCMAudio(source=mus), after=lambda e: print('done', e))
+
+        await message.channel.send('now playing - {}'.format(mus))
+        #await message.guild.VoiceChannel.connect()
+        
+        #await client.send_message(message.channel,"<a:blush:563371750486704128>")
+        #await client.send_message(message.channel,"<a:miner:563374310572425225>")
+'''

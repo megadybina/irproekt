@@ -1,8 +1,0 @@
-Среда:
-Python 3.7 (важно)
-
-Модули: (установка через pip)
-Pil  (pip install Pillow)
-discord    (pip install discord.py)
-requests (pip install requests)
-
