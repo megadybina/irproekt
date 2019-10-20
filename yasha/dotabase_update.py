@@ -5,6 +5,8 @@ import json
 import re
 from tools import highlight
 
+
+
 def removezero(llist):
     tt=[]
     for t in llist:
@@ -167,16 +169,9 @@ def updatepatchnotes():
     patchnotes_en = json.loads(r.text)
     r = requests.get(f"https://api.stratz.com/api/v1/Patch/notes?LanguageId=19")
     patchnotes_ru=json.loads(r.text)
-    
-    #r = requests.get(f"http://www.dota2.com/patches/7.22?l=english")
-    #soup = BeautifulSoup(r.text, 'html.parser')
-    #print(soup.prettify())
     parsenotes(patchnotes_en,'en')
     parsenotes(patchnotes_ru,'ru')
-    
-
             
-#updatepatchnotes()        
 
 
      
@@ -255,10 +250,10 @@ def updateheroes():
                             print(count)
                     f.close()
                     break
-#updateheroes()
+
 #with open('dotabase/heroes.txt', 'r') as f:
- #   l=f.readlines()
-  #  pp(dict(eval(l[12])))
+#    l=f.readlines()
+#    pp(dict(eval(l[12])))
 #
 '''
 {'id': 104, 'name': 'Dagon I', 'aliases': ['dagon'], 'need_recipe': True, 'icon': 'dotabase/items/104.png', 'itemabs_en': '__Active: Energy Burst__$ Emits a powerful burst of magical damage upon a targeted enemy unit. Upgradable.$$Damage: **400** / 500 / 600 / 700 / 800$Range: **600** / 650 / 700 / 750 / 800$$', 'itemabs_ru': '__Активируемая: Energy Burst__$ Выпускает мощный всплеск энергии, наносящий магический урон выбранному вражескому существу. Предмет можно улучшить.$$Урон: **400** / 500 / 600 / 700 / 800$Дальность: **600** / 650 / 700 / 750 / 800$$', 'cooldown': ['**35**', '30', '25', '20', '15'], 'mana_cost': ['**120**', '140', '160', '180', '200'], 'cost': 2700, 'stacks': False, 'side_shop': False, 'secret_shop': False, 'attr_en': ['**+13** / 16 / 19 / 22 / 25 Intelligence', '**+5** All Attributes'], 'attr_ru': ['**+13** / 16 / 19 / 22 / 25 к интеллекту', '**+5** ко всем атрибутам'], 'note_en': ['Instantly kills illusions.'], 'note_ru': ['Мгновенно убивает иллюзии.'], 'lore_en': ['A lesser wand that grows in power the longer it is used, it brings magic to the fingertips of the user.'], 'lore_ru': ['Волшебная палочка, которая со временем становится лишь сильнее, наделяет владельца магией на кончиках пальцев.']}
@@ -832,7 +827,7 @@ def updateabils():
                             ok=False
                       except:
                           ok=True
-                      if ok==True:
+                      if ok:
                         atr=re.sub(r'<(.+?)>','**',atr)
                         nums_en=re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?",atr)
                         res=''
@@ -842,6 +837,8 @@ def updateabils():
                             atr=atr[atr.index(num)+len(num):]
                             res+=t
                         atrs.append(res+atr)
+                      else:
+                          print(atr)
                     abinfo['attr_en']=atrs
 
                     atrs=[]
@@ -852,7 +849,7 @@ def updateabils():
                             ok=False
                       except:
                           ok==True
-                      if ok==True:
+                      if ok:
                         atr=re.sub(r'<(.+?)>','**',atr)
                         nums_ru=re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?",atr)
                         res=''
@@ -862,6 +859,8 @@ def updateabils():
                             atr=atr[atr.index(num)+len(num):]
                             res+=t
                         atrs.append(res+atr)
+                      else:
+                          print(atr)
                     abinfo['attr_ru']=atrs
                 abinfo['note_en']=en['language'][0].get('notes',None)
                 abinfo['note_ru']=ru['language'][0].get('notes',None)
@@ -914,7 +913,7 @@ def updateabils():
                 print(abinfo)
             count+=1
             print(count)
-#updateabils()
+
 #with open('dotabase/abilities.txt', 'r') as f:
 #    l=f.readlines()
 #    pp(dict(eval(l[467])))
@@ -1057,7 +1056,11 @@ with open('dotabase/tome.txt', 'w', encoding='utf-8') as f:
 
 
 
+#updatepatchnotes()
 
+updateitems_no_als()
+updateabils()
+updateheroes()
 
 
 

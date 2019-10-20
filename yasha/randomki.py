@@ -41,7 +41,7 @@ async def randomhero(message,client):
         pref=getpref(message.guild.id)
         
         if pref[0]==message.content[0]:
-            start = {'ru':['Думаю, ','Стоит попробовать ','Возможно стоит взять ','Определённо ','Может быть '],'en':['Maybe ','You should try ','Pick ','Try ','Hmm, ', 'Obviously ']}
+            start = {'ru':['Думаю, ','Стоит попробовать ','Возможно, стоит взять ','Определённо ','Может быть '],'en':['Maybe ','You should try ','Pick ','Try ','Hmm, ', 'Obviously ']}
             with open('dotabase/heroes.txt', mode='r', encoding='utf-8-sig') as f:
                 heroes=f.readlines()
             hero=dict(eval(random.choice(heroes)))

@@ -10,7 +10,313 @@ import shutil
 from dotabase import *
 from pprint import pprint as pp
 import glob
+import re
 
+'''
+with open('dotabase/abilities.txt', 'r') as f:
+    l=f.readlines()
+    atr_list_ru=[]
+    ru,en={},{}
+    atr_list_en=[]
+    for ll in l:
+        t=dict(eval(ll))
+        for atr in t['attr_en']:
+            at=atr.split(':')
+            if at[0] not in atr_list_en:
+                atr_list_en.append(at[0])
+                en[at[0]]=1
+            else:
+                en[at[0]]+=1
+        for atr in t['attr_ru']:
+            at=atr.split(':')
+            if at[0] not in atr_list_ru:
+                atr_list_ru.append(at[0])
+                ru[at[0]]=1
+            else:
+                ru[at[0]]+=1
+    #pp(atr_list_en)
+    #pp(atr_list_ru)
+    pp(sorted(en.items(), key = lambda x: x[1], reverse=True))
+    pp(sorted(ru.items(), key = lambda x: x[1], reverse=True))
+''' 
+async def abs(message,client):
+    if message.content.startswith('abs',1):
+        try:
+            lang=getlang(message.guild.id)
+        except:
+            lang='en'
+        try:
+            pref=getpref(message.guild.id)
+        except:
+            pref='!'
+        responses={"en":{"bad_req":"No abilities meeting these criterias were found",
+                         "abs":"Ability search",
+                         "error":"An error occured",
+                         "bad_op":"Unacceptable operator",
+                         "bad_crit":"Unacceptable criteria "
+                         },
+                         
+                   "ru":{"bad_req":"Способностей,подходящих под заданные критерии не найдено",
+                         "abs":"Поиск по способностям",
+                         "error":"Возникла ошибка",
+                         "bad_op":"Недопустимый оператор",
+                         "bad_crit":"Недопустимый критерий "
+                         }}
+
+        attrs={"damage":['DAMAGE','SCEPTER DAMAGE','TOTAL DAMAGE','MAX DAMAGE','MAX HP AS DAMAGE','ATTACK DAMAGE','STOMP DAMAGE','DAMAGE (**EXORT**)','FIREBLAST DAMAGE','PASS DAMAGE','ERUPT DAMAGE','ECHO DAMAGE','LANCE DAMAGE','DAMAGE MIN','DAMAGE MAX','AVALANCHE DAMAGE','HERO TOTAL DAMAGE','AREA DAMAGE','DAMAGE EACH BOUNCE','DAMAGE PER HIT','LASER DAMAGE','DAMAGE PER AXE','BLAST DAMAGE','BEAM DAMAGE','HEAL/DAMAGE','DAMAGE DEALT','MANA POOL TO DAMAGE','HIT DAMAGE','PURGE DAMAGE','MAXIMUM DAMAGE','POOF DAMAGE','AXE DAMAGE','DAMAGE/HEAL'],
+               "atk_dmg":['BONUS DAMAGE','ATTACK DAMAGE'],
+               "dmg_red":['DAMAGE REDUCTION','BONUS ARMOR','ARMOR'],#
+               "dur":['DURATION','SCEPTER DURATION','BURN DURATION'],
+               "range":['CAST RANGE','RANGE','DISTANCE','SCEPTER CAST RANGE','SCEPTER RANGE','FISSURE RANGE'],
+               "radius":['RADIUS','SCEPTER RADIUS','DAMAGE RADIUS','EXPLOSION RADIUS','SCEPTER AOE','ERUPT RADIUS','STUN RADIUS','RITUAL AREA'],
+               "slow":['SLOW DURATION','MOVEMENT SLOW','SLOW','ATTACK SLOW','MOVE SLOW','ATTACK SPEED SLOW','ATTACK SPEED REDUCTION','MOVEMENT REDUCTION'],#
+               "atk_spd":['BONUS ATTACK SPEED'],#
+               "armor_red":['ARMOR REDUCTION'],#
+               "silence":['SILENCE DURATION'],
+               "crit":['CRITICAL DAMAGE'],#
+               "lifesteal":['LIFESTEAL','LIFE STEAL','CRITICAL LIFESTEAL'],#
+               "stun":['STUN DURATION','MAXIMUM STUN','MINIMUM STUN','SCEPTER STUN DURATION'],
+               "dps":['DAMAGE PER SECOND','BURN DAMAGE','DAMAGE PER TICK'],
+               "hpregen":['HEALTH REGEN','HEAL','HP REGEN','HEAL PER SECOND','BONUS HP REGEN','HP','HEAL AMOUNT','KILL HEAL PERCENTAGE','MAX HEALTH PER SECOND'],#
+               "cd":[],
+               "mc":[]}
+        bool_only=["hpregen","lifesteal","crit","armor_red","atk_spd","slow","dmg_red","atk_dmg"]
+        
+        phr=responses[f"{lang}"]
+        
+        if pref==message.content[0]:
+            await message.add_reaction("⏳")
+
+            with open('dotabase/abilities.txt', 'r') as f:
+                l=f.readlines()
+
+            embed = discord.Embed(title=phr["abs"],description='',colour=discord.Colour(0x7840ac),url="https://discordapp.com")
+            embed.set_footer(text=f"{client.user.name} | {pref}abs", icon_url=client.user.avatar_url_as(format='png'))
+            
+            query=message.content.split()
+            good={}
+            crits=[]
+            for line in l:
+                ab=dict(eval(line))
+                bad=False
+                count=1
+                for crit in query[1:]:
+                    bad_op=True
+                    if ">=" in crit:
+                        bad_op=False
+                        t=crit.split(">=")
+                        if t[0] not in attrs.keys():
+                            embed.add_field(name=phr['error'],value=phr['bad_op'] + t[0])
+                            return embed
+                        else:
+                            if t[0] not in crits:
+                                crits.append(t[0])
+                        mc_or_cd=False
+                        if t[0]=='mc':
+                            mc_or_cd=True
+                            if ab.get('mana_cost',[])!=[]:
+                                mc=ab.get('mana_cost')
+                                if mc==reversed(mc):
+                                    if int(mc[0])>=int(t[1]):
+                                        if good.get(ab['hero'],None)==None:
+                                            good[ab['hero']]={}
+                                        if good[ab['hero']].get(ab['name'],None)==None:
+                                            good[ab['hero']][ab['name']]={}
+                                        good[ab['hero']][ab['name']][t[0]]=mc[0]
+                                else:
+                                    for i in range(len(mc)):
+                                        if int(mc[i])>=int(t[1]):
+                                            if good.get(ab['hero'],None)==None:
+                                                good[ab['hero']]={}
+                                            if good[ab['hero']].get(ab['name'],None)==None:
+                                                good[ab['hero']][ab['name']]={}
+                                            good[ab['hero']][ab['name']][t[0]]=mc[i]+f'(lvl {i+1})'
+                                            break
+                            else:
+                                if t[1]=='0':
+                                    if good.get(ab['hero'],None)==None:
+                                         good[ab['hero']]={}
+                                    if good[ab['hero']].get(ab['name'],None)==None:
+                                         good[ab['hero']][ab['name']]={}
+                                    good[ab['hero']][ab['name']][t[0]]='0'
+                        if t[0]=='cd':
+                            mc_or_cd=True
+                            if ab.get('cooldown',[])!=[]:
+                                cd=ab.get('cooldown')
+                                if cd==reversed(cd):
+                                    if float(cd[0])>=float(t[1]):
+                                        if good.get(ab['hero'],None)==None:
+                                            good[ab['hero']]={}
+                                        if good[ab['hero']].get(ab['name'],None)==None:
+                                            good[ab['hero']][ab['name']]={}
+                                        good[ab['hero']][ab['name']][t[0]]=mc[0]
+                                else:
+                                    for i in range(len(cd)):
+                                        if float(cd[i])>=float(t[1]):
+                                            if good.get(ab['hero'],None)==None:
+                                                good[ab['hero']]={}
+                                            if good[ab['hero']].get(ab['name'],None)==None:
+                                                good[ab['hero']][ab['name']]={}
+                                            good[ab['hero']][ab['name']][t[0]]=cd[i]+f'(lvl {i+1})'
+                                            break
+                            else:
+                                if t[1]=='0':
+                                    if good.get(ab['hero'],None)==None:
+                                         good[ab['hero']]={}
+                                    if good[ab['hero']].get(ab['name'],None)==None:
+                                         good[ab['hero']][ab['name']]={}
+                                    good[ab['hero']][ab['name']][t[0]]='0'
+                        if not mc_or_cd:        
+                            for attribute in ab['attr_en']:
+                                abatr=attribute.split(":")
+                                if abatr[0].upper() in attrs[t[0]]:
+                                    try:
+                                        values=re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?",abatr[1])
+                                        for i in range(len(values)):
+                                            if float(values[i])>=float(t[1]):
+                                                if good.get(ab['hero'],None)==None:
+                                                    good[ab['hero']]={}
+                                                if good[ab['hero']].get(ab['name'],None)==None:
+                                                    good[ab['hero']][ab['name']]={}
+                                                good[ab['hero']][ab['name']][t[0]]=values[i]+f'(lvl {i+1})'
+                                                break
+                                    except:
+                                        pass
+
+                    elif "<=" in crit:
+                        bad_op=False
+                        t=crit.split("<=")
+                        if t[0] not in attrs.keys():
+                            embed.add_field(name=phr['error'],value=phr['bad_op'] + t[0])
+                            return embed
+                        else:
+                            if t[0] not in crits:
+                                crits.append(t[0])
+                        mc_or_cd=False
+                        if t[0]=='mc':
+                            mc_or_cd=True
+                            if ab.get('mana_cost',[])!=[]:
+                                mc=ab.get('mana_cost')
+                                if mc==reversed(mc):
+                                    if int(mc[0])<=int(t[1]):
+                                        if good.get(ab['hero'],None)==None:
+                                            good[ab['hero']]={}
+                                        if good[ab['hero']].get(ab['name'],None)==None:
+                                            good[ab['hero']][ab['name']]={}
+                                        good[ab['hero']][ab['name']][t[0]]=mc[0]
+                                else:
+                                    for i in range(len(mc)):
+                                        if int(mc[i])<=int(t[1]):
+                                            if good.get(ab['hero'],None)==None:
+                                                good[ab['hero']]={}
+                                            if good[ab['hero']].get(ab['name'],None)==None:
+                                                good[ab['hero']][ab['name']]={}
+                                            good[ab['hero']][ab['name']][t[0]]=mc[i]+f'(lvl {i+1})'
+                                            break
+                            else:
+                                if good.get(ab['hero'],None)==None:
+                                    good[ab['hero']]={}
+                                if good[ab['hero']].get(ab['name'],None)==None:
+                                    good[ab['hero']][ab['name']]={}
+                                good[ab['hero']][ab['name']][t[0]]='0'
+                        if t[0]=='cd':
+                            mc_or_cd=True
+                            if ab.get('cooldown',[])!=[]:
+                                cd=ab.get('cooldown')
+                                if cd==reversed(cd):
+                                    if float(cd[0])<=float(t[1]):
+                                        if good.get(ab['hero'],None)==None:
+                                            good[ab['hero']]={}
+                                        if good[ab['hero']].get(ab['name'],None)==None:
+                                            good[ab['hero']][ab['name']]={}
+                                        good[ab['hero']][ab['name']][t[0]]=mc[0]
+                                else:
+                                    gud=False
+                                    for i in range(len(cd)):
+                                        if float(cd[i])<=float(t[1]):
+                                            if good.get(ab['hero'],None)==None:
+                                                good[ab['hero']]={}
+                                            if good[ab['hero']].get(ab['name'],None)==None:
+                                                good[ab['hero']][ab['name']]={}
+                                            good[ab['hero']][ab['name']][t[0]]=cd[i]+f'(lvl {i+1})'
+                                            break
+                            else:
+                                if good.get(ab['hero'],None)==None:
+                                    good[ab['hero']]={}
+                                if good[ab['hero']].get(ab['name'],None)==None:
+                                    good[ab['hero']][ab['name']]={}
+                                good[ab['hero']][ab['name']][t[0]]='0'
+                        if not mc_or_cd:        
+                            for attribute in ab['attr_en']:
+                                abatr=attribute.split(":")
+                                if abatr[0].upper() in attrs[t[0]]:
+                                    try:
+                                        values=re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?",abatr[1])
+                                        gud=False
+                                        for i in range(len(values)):
+                                            if float(values[i])<=float(t[1]):
+                                                if good.get(ab['hero'],None)==None:
+                                                    good[ab['hero']]={}
+                                                if good[ab['hero']].get(ab['name'],None)==None:
+                                                    good[ab['hero']][ab['name']]={}
+                                                good[ab['hero']][ab['name']][t[0]]=values[i]+f'(lvl {i+1})'
+                                                break
+                                    except:
+                                        pass
+                    else:
+                        if crit not in attrs.keys():
+                            embed.add_field(name=phr['error'],value=phr['bad_op'] + crit)
+                            return embed
+                        else:
+                            if crit not in crits:
+                                crits.append(crit)
+                        bad_op=False
+                        for attribute in ab['attr_en']:
+                            abatr=attribute.split(':')
+                            if abatr[0].upper() in attrs[crit] and crit in bool_only:
+                                if good.get(ab['hero'],None)==None:
+                                    good[ab['hero']]={}
+                                if good[ab['hero']].get(ab['name'],None)==None:
+                                    good[ab['hero']][ab['name']]={}
+                                good[ab['hero']][ab['name']][crit]='true'
+
+
+
+
+
+                        
+                    if bad_op:
+                        embed.add_field(name=phr['error'],value=phr['bad_op'])
+                        return embed
+                if bad:
+                    try:
+                        good[ab['hero']].pop([ab['name']])
+                    except:
+                        pass
+            res={}
+            for hero in good.keys():
+                abils=good[hero].keys()
+                for abil in abils:
+                    if list(good[hero][abil].keys())==crits:
+                        if res.get(hero,None)==None:
+                            res[hero]={}
+                        res[hero][abil]=good[hero][abil]
+            #embed.description+=
+            for hero in res.keys():
+                t='**'+hero+'**'+'\n'
+                for abil in res[hero].keys():
+                    t+=u"\u2800"+u"\u2022"+' __'+abil+'__` '
+                    t+=' | '.join([f'{cr}: {val}' for cr,val in res[hero][abil].items()])
+                    t+='`\n'
+                embed.description+=t
+            await message.clear_reactions()
+            await message.channel.send(embed=embed)
+
+
+
+
+
+    
 async def hero(message,client):
     if message.content.startswith('hero',1):
         try:
@@ -187,23 +493,23 @@ async def ability(message,client):
                         atrs=''
                         for atr in abres.get(f'attr_{lang}'):
                             desc+=atr+'\n'
-                    if abres.get('cast_point')!=None:
+                    if abres.get('cast_point',[])!=[]:
                         castpoint=abres.get('cast_point')
-                        if castpoint[1:]==castpoint[:-1]:
+                        if castpoint==reversed(castpoint):
                             desc+=phr['cast_point'].upper()+': **'+str(castpoint[0])+'**\n'
                         else:
                             desc+=phr['cast_point'].upper()+': **'+'** / **'.join(str(i) for i in castpoint)+'**\n'
                     else:
                         desc+='\n'
-                    if abres.get('cooldown')!=[]:
+                    if abres.get('cooldown',[])!=[]:
                         cd=abres.get('cooldown')
-                        if cd[1:]==cd[:-1]:
+                        if cd==reversed(cd):
                             desc+='\n<:cooldown:595171442652479518> **'+str(cd[0])+'**'
                         else:
                             desc+='\n<:cooldown:595171442652479518> **'+'** / **'.join(str(i) for i in cd)+'**'
-                    if abres.get('mana_cost')!=[]:
+                    if abres.get('mana_cost',[])!=[]:
                         mc=abres.get('mana_cost')
-                        if mc[1:]==mc[:-1]:
+                        if mc==reversed(mc):
                             desc+='\n<:manacost:595172991567134721> **'+str(int(mc[0]))+'**'
                         else:
                             desc+='\n<:manacost:595172991567134721>'+'**'+'** / **'.join(str(int(i)) for i in mc)+'**'
@@ -456,7 +762,7 @@ async def patch(message,client):
 
 
                     
-            else: # no number -> retrning info from latest patch
+            else: # no number -> retrning info from the latest patch
                 vers=glob.glob('dotabase\patchnotes\en\*.txt')   
                 patch=vers[-1].split('\\')[-1][:-4]
                 name=' '.join(query[1:])
@@ -464,13 +770,13 @@ async def patch(message,client):
             
             if f'dotabase\\patchnotes\\en\\{patch}.txt' in glob.glob('dotabase\patchnotes\en\*.txt'):
                 if name=='general':
-                    embed = discord.Embed(title=f'{phr["patch"]} {query[-1]} | {phr["general"]}',colour=discord.Colour(0x13a788),url=f"http://www.dota2.com/patches/{patch.replace('_','.')}")
+                    embed = discord.Embed(title=f'{phr["patch"]} {patch.replace("_",".")} | {phr["general"]}',colour=discord.Colour(0x13a788),url=f"http://www.dota2.com/patches/{patch.replace('_','.')}")
                     embed.set_footer(text=f"{client.user.name} | {pref}patch", icon_url=client.user.avatar_url_as(format='png'))                    
                     with open(f'dotabase/patchnotes/{lang}/{patch}.txt', 'r') as f:
                         version=dict(eval(f.read()))
                     if version.get("general",None)!=None:
                         changes=version["general"]['changes']
-                        embed = discord.Embed(title=f'{phr["patch"]} {query[-1]} | {phr["general"]}',description='',colour=discord.Colour(0x13a788),url=f"http://www.dota2.com/patches/{patch.replace('_','.')}")
+                        embed = discord.Embed(title=f'{phr["patch"]} {patch.replace("_",".")} | {phr["general"]}',description='',colour=discord.Colour(0x13a788),url=f"http://www.dota2.com/patches/{patch.replace('_','.')}")
                         
                         field=False
                         for n in changes:
@@ -507,7 +813,7 @@ async def patch(message,client):
                         if name in hero['aliases'] or name.lower()==hero['name'].lower():
                             shortname=hero['shortname']
                             icon=hero['icon']
-                            embed = discord.Embed(title=f'{phr["patch"]} {query[-1]} | <{hero["emoji"]}>**{hero["name"]}**',colour=discord.Colour(0x13a788),url=f"http://www.dota2.com/patches/{patch.replace('_','.')}")
+                            embed = discord.Embed(title=f'{phr["patch"]} {patch.replace("_",".")} | <{hero["emoji"]}>**{hero["name"]}**',colour=discord.Colour(0x13a788),url=f"http://www.dota2.com/patches/{patch.replace('_','.')}")
                             embed.set_footer(text=f"{client.user.name} | {pref}patch", icon_url=client.user.avatar_url_as(format='png'))
                             embed.set_thumbnail(url=f'http://cdn.dota2.com/apps/dota2/images/heroes/{icon}')
                             with open(f'dotabase/patchnotes/{lang}/{patch}.txt', 'r') as f:
@@ -537,7 +843,7 @@ async def patch(message,client):
                         if name in item['aliases'] or name.lower()==item['name'].lower():
                             shortname=item['code_name']
                             icon=item['icon']
-                            embed = discord.Embed(title=f'{phr["patch"]} {query[-1]} | `{item["name"]}`',colour=discord.Colour(0x13a788),url=f"http://www.dota2.com/patches/{patch.replace('_','.')}")
+                            embed = discord.Embed(title=f'{phr["patch"]} {patch.replace("_",".")} | `{item["name"]}`',colour=discord.Colour(0x13a788),url=f"http://www.dota2.com/patches/{patch.replace('_','.')}")
                             embed.set_footer(text=f"{client.user.name} | {pref}patch", icon_url=client.user.avatar_url_as(format='png'))
                                                     
                             with open(f'dotabase/patchnotes/{lang}/{patch}.txt', 'r') as f:

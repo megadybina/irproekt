@@ -703,4 +703,4 @@ def makemap(matchinfo):
             lines["radles"]["is_taken"][j]=1
         im.paste(heroicon,coords,mask=heroicon)
 
-    im.save("map{}.png".format(matchid),"PNG")
+    im.save("map{}.png".format(matchinfo["match_id"]),"PNG")

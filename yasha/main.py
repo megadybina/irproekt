@@ -24,7 +24,7 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-TOKEN = 'veryverysecretcode'
+TOKEN = 'NTM3MjcyNjk0MDE4OTMyNzU0.XZmnig.SA5pyuNpuG54t1clKQ_XcK9Sryc'
 client = discord.Client()
 
 
@@ -432,7 +432,7 @@ async def on_message(message):
             if len(command)>=2:
                 await helpcom(message,client,command[1],lang,pref)
             else:
-                reacts=['<a:matchinfo:595952615599374337>','<:exp:593470312088338441>','<a:Emoticon_bountyrune:594813355303239700>',u"\U0001F916"]
+                reacts=['<a:matchinfo:595952615599374337>','<:exp:593470312088338441>',u"\U0001F916"]
                 mainhelp = helpmain(message,client,lang,pref)
                 helpmsg = await message.channel.send(embed=mainhelp)
                 for react in reacts:
@@ -470,6 +470,7 @@ async def on_message(message):
 
     await dotainfo.hero(message,client)
 
+    await dotainfo.abs(message,client)
 
     await dotainfo.item(message,client)
 
@@ -971,8 +972,11 @@ async def on_message(message):
                     await radmoji.delete()
                 except:
                     pass
-                
-                remove(f"adv_graph{matchid}.png")                                                                                                         
+
+                try:
+                    remove(f"adv_graph{matchid}.png") 
+                except:
+                    pass                                                                                                                         
 
                 for el in heroemojis:
                     await msg.add_reaction(el)
@@ -995,7 +999,7 @@ async def on_message(message):
                         return user.id!=537272694018932754 and reaction.message.id==msg.id
         
                 react = await client.wait_for("reaction_add",check=check)
-                
+                print(stratz)
                 while str(react[0])!="❌":
                     
                     if str(react[0])=="<:mapemoji:561636043204329556>" and not stratz:
