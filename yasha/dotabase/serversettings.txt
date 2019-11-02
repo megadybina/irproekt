@@ -1,5 +1,5 @@
 {'server_id': 553951455749603341, 'lang': 'en', 'prefix': '!'}
-{'server_id': 527438459216986116, 'lang': 'en', 'prefix': '!'}
+{'server_id': 527438459216986116, 'lang': 'ru', 'prefix': '!'}
 {'server_id': 349275608917868545, 'lang': 'en', 'prefix': '?'}
 {'server_id': 588705467635859457, 'lang': 'en', 'prefix': '!'}
 {'server_id': 594200720048259083, 'lang': 'en', 'prefix': '!'}

@@ -1,0 +1,1 @@
+{-1:'Invalid',0:'Unranked',1:'Practice',2:'Tournament',3:'Tutorial',4:'Coop vs Bots',5:'Team Match',6:'Solo Queue',7:'Ranked',8:'Solo Mid',9:'Battle Cup'}

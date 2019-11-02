@@ -20,20 +20,6 @@ def get_user(user_discord_id):
                 user=None
         return user
     
-def changemoney(user,value,op):
-    with open('dotabase/userprofiles.txt','r') as f:
-        users=f.readlines()
-    with open('dotabase/userprofiles.txt','w') as f:
-        for tuser in users:
-            t=dict(eval(tuser))
-            if t['discord_id']==user['discord_id']:
-                if op=='+':
-                    t['inventory']['gold']+=value
-                else:
-                    t['inventory']['gold']-=value
-                f.write(str(t)+'\n')
-            else:
-                f.write(tuser)
                 
 def getpref(serverid):
     with open("dotabase\serversettings.txt","r") as f:
@@ -95,7 +81,7 @@ async def is_parsed(matchid):
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get("https://api.opendota.com/api/matches/{}".format(matchid)) as r:
-                match=json.loads(r.text)
+                match=json.loads(await r.text())
         return match.get("version", None) is not None
     except:
         return False
@@ -160,6 +146,14 @@ def hero_by_alias(heroname):
         for alias in hero['aliases']:
             if heroname.upper()==alias.upper():
                 return hero
+def get_duration(duration):
+    mins=duration//60
+    if duration%60<10:  
+        sec="0"+str(duration%60)
+    else:
+        sec=duration%60
+    time="{0}:{1}".format(mins,sec)
+    return time
 ###challenges
 async def waitchallenge(time,msg_chan,reset):
                 try:

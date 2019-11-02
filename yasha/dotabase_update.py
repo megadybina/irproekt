@@ -16,7 +16,7 @@ def removezero(llist):
             tt.append(str(t))
     return tt
 '''
-TEMPLATE
+HERO DATA EXAMPLE
 {'abilities': {'5069': 'Illusory Orb',
                '5070': 'Ethereal Jaunt',
                '5071': 'Waning Rift',
@@ -96,7 +96,6 @@ def parsenotes(patchnotes,lang):
                 with open(f'dotabase\patchnotes\{lang}\{filenames[-1]}.txt','w') as f:
                     f.write(str(version).replace('ó','o'))
                     print(filenames[-1])
-                    #pp(version)
             curnote=''
             filenames.append(patchnumber)
             version={}
@@ -108,14 +107,12 @@ def parsenotes(patchnotes,lang):
                         version[curnote]=patch
                         patch={'changes':[]}
                         curnote='general'
-                #print(patch)
                 note['text']=note['text'].replace('<h2>','**')
                 note['text']=note['text'].replace('</h2>','**')
                 if patch=={}:
                     curnote='general'
                     patch={'changes':[]}
                 patch['changes'].append(re.sub(r'<(.+?)>','',note['text']))
-                #print(patch)
                 
                 continue
             for herof in heroes:
@@ -156,7 +153,6 @@ def parsenotes(patchnotes,lang):
                         patch['item']=[]
                     patch['item'].append(re.sub(r'<(.+?)>','**',note['text']))
                     break
-        #print(note['id'],curnote,patch)
                 
     with open(f'dotabase\patchnotes\{lang}\{filenames[-1]}.txt','w') as f:
         f.write(str(version).replace('ó','o'))
@@ -171,8 +167,15 @@ def updatepatchnotes():
     patchnotes_ru=json.loads(r.text)
     parsenotes(patchnotes_en,'en')
     parsenotes(patchnotes_ru,'ru')
-            
 
+def updateversion():
+    r = requests.get('https://api.stratz.com/api/v1/GameVersion')
+    versions = json.loads(r.text)
+    fver={}
+    with open('dotabase/version.txt','w') as f:
+        for ver in versions:
+            fver[ver['name']]=ver['id']
+        f.write(str(fver))
 
      
 def updateheroes():
@@ -251,21 +254,7 @@ def updateheroes():
                     f.close()
                     break
 
-#with open('dotabase/heroes.txt', 'r') as f:
-#    l=f.readlines()
-#    pp(dict(eval(l[12])))
-#
-'''
-{'id': 104, 'name': 'Dagon I', 'aliases': ['dagon'], 'need_recipe': True, 'icon': 'dotabase/items/104.png', 'itemabs_en': '__Active: Energy Burst__$ Emits a powerful burst of magical damage upon a targeted enemy unit. Upgradable.$$Damage: **400** / 500 / 600 / 700 / 800$Range: **600** / 650 / 700 / 750 / 800$$', 'itemabs_ru': '__Активируемая: Energy Burst__$ Выпускает мощный всплеск энергии, наносящий магический урон выбранному вражескому существу. Предмет можно улучшить.$$Урон: **400** / 500 / 600 / 700 / 800$Дальность: **600** / 650 / 700 / 750 / 800$$', 'cooldown': ['**35**', '30', '25', '20', '15'], 'mana_cost': ['**120**', '140', '160', '180', '200'], 'cost': 2700, 'stacks': False, 'side_shop': False, 'secret_shop': False, 'attr_en': ['**+13** / 16 / 19 / 22 / 25 Intelligence', '**+5** All Attributes'], 'attr_ru': ['**+13** / 16 / 19 / 22 / 25 к интеллекту', '**+5** ко всем атрибутам'], 'note_en': ['Instantly kills illusions.'], 'note_ru': ['Мгновенно убивает иллюзии.'], 'lore_en': ['A lesser wand that grows in power the longer it is used, it brings magic to the fingertips of the user.'], 'lore_ru': ['Волшебная палочка, которая со временем становится лишь сильнее, наделяет владельца магией на кончиках пальцев.']}
-{'id': 106, 'name': 'Necronomicon I', 'aliases': ['necronomicon'], 'need_recipe': True, 'icon': 'dotabase/items/106.png', 'itemabs_en': '__Active: Demonic Summoning__$Summons a Warrior and an Archer to fight for you for **60** seconds.$$__Warrior:__$Burns mana every hit, and deals magical damage to whoever kills it.  Gains True Sight at level **3**$Health: **700** / 800 / 900$Damage: **75** / 100 / 125$Mana Break Damage: **30** / 40 / 50$Last Will Damage: **600** / 700 / 800$$__Archer:__$Has a passive movement and attack speed aura. Gains Purge at Level **3**$Health: **700** / 800 / 900$Damage: **60** / 90 / 120$Aura Move Speed: **5** / 7 / 9$Aura Attack Speed: **5** / 7 / 9$Aura Radius: **1200**$$', 'itemabs_ru': '__Активируемая: Summoning__$Призывает на **60** сек. подконтрольных вам воина и лучника.$$__Воин:__$Каждой атакой сжигает ману цели и наносит магический урон тому, кто его убьёт. На третьем уровне получает эффект True Sight, раскрывающий невидимость.$Здоровье: **700** / 800 / 900$Урон: **75** / 100 / 125$Сжигает маны: **30** / 40 / 50$Урон за убийство: **600** / 700 / 800$$__Лучник:__$Имеет ауру, увеличивающую скорость атаки и передвижения союзников. На третьем уровне получает способность, развеивающую положительные эффекты противника.$Здоровье: **700** / 800 / 900$Урон: **60** / 90 / 120$Доп. скорость передвижения: **5** / 7 / 9$Доп. скорость атаки: **5** / 7 / 9$Радиус ауры: **1200**$$', 'cooldown': ['90'], 'mana_cost': ['50'], 'cost': 2400, 'stacks': False, 'side_shop': False, 'secret_shop': False, 'attr_en': ['**+10** / 15 / 20 Strength', '**+2** / 2.5 / 3 Mana Regeneration'], 'attr_ru': ['**+10** / 15 / 20 к силе', '**+2** / 2.5 / 3 к восстановлению маны'], 'note_en': [], 'note_ru': [], 'lore_en': ['Considered the ultimate in necromancy and demonology, a powerful malefic force is locked within its pages.'], 'lore_ru': ['Наиболее полный свод знаний о некромантии и демонологии, скрывающий на своих страницах мощную тёмную магию.']}
-{'id': 193, 'name': 'Necronomicon II', 'aliases': ['necronomicon 2'], 'need_recipe': True, 'icon': 'dotabase/items/193.png', 'itemabs_en': '__Active: Demonic Summoning__$Summons a Warrior and an Archer to fight for you for **60** seconds.$$__Warrior:__$Burns mana every hit, and deals magical damage to whoever kills it.  Gains True Sight at level **3**$Health: 700 / **800** / 900$Damage: 75 / **100** / 125$Mana Break Damage: 30 / **40** / 50$Last Will Damage: 600 / **700** / 800$$__Archer:__$Has a passive movement and attack speed aura. Gains Purge at Level **3**$Health: 700 / **800** / 900$Damage: 60 / **90** / 120$Aura Move Speed: 5 / **7** / 9$Aura Attack Speed: 5 / **10** / 15$Aura Radius: **1200**$$', 'itemabs_ru': '__Активируемая: Summoning__$Призывает на **60** сек. подконтрольных вам воина и лучника.$$__Воин:__$Каждой атакой сжигает ману цели и наносит магический урон тому, кто его убьёт. На третьем уровне получает эффект True Sight, раскрывающий невидимость.$Здоровье: 700 / **800** / 900$Урон: 75 / **100** / 125$Сжигает маны: 30 / **40** / 50$Урон за убийство: 600 / **700** / 800$$__Лучник:__$Имеет ауру, увеличивающую скорость атаки и передвижения союзников. На третьем уровне получает способность, развеивающую положительные эффекты противника.$Здоровье: 700 / **800** / 900$Урон: 60 / **90** / 120$Доп. скорость передвижения: 5 / **7** / 9$Доп. скорость атаки: 5 / **10** / 15$Радиус ауры: **1200**$$', 'cooldown': ['90'], 'mana_cost': ['50'], 'cost': 3700, 'stacks': False, 'side_shop': False, 'secret_shop': False, 'attr_en': ['+10 / **15** / 20 Strength', '+2 / **2.5** / 3 Mana Regeneration'], 'attr_ru': ['+10 / **15** / 20 к силе', '+2 / **2.5** / 3 к восстановлению маны'], 'note_en': [], 'note_ru': [], 'lore_en': ['Considered the ultimate in necromancy and demonology, a powerful malefic force is locked within its pages.'], 'lore_ru': ['Наиболее полный свод знаний о некромантии и демонологии, скрывающий на своих страницах мощную тёмную магию.']}
-{'id': 194, 'name': 'Necronomicon III', 'aliases': ['necronomicon 3'], 'need_recipe': True, 'icon': 'dotabase/items/194.png', 'itemabs_en': '__Active: Demonic Summoning__$Summons a Warrior and an Archer to fight for you for **60** seconds.$$__Warrior:__$Burns mana every hit, and deals magical damage to whoever kills it.  Gains True Sight at level **3**$Health: 700 / 800 / **900**$Damage: 75 / 100 / **125**$Mana Break Damage: 30 / 40 / **50**$Last Will Damage: 600 / 700 / **800**$$__Archer:__$Has a passive movement and attack speed aura. Gains Purge at Level **3**$Health: 700 / 800 / **900**$Damage: 60 / 90 / **120**$Aura Move Speed: 5 / 7 / **9**$Aura Attack Speed: 5 / 10 / **15**$Aura Radius: **1200**$$', 'itemabs_ru': '__Активируемая: Summoning__$Призывает на **60** сек. подконтрольных вам воина и лучника.$$__Воин:__$Каждой атакой сжигает ману цели и наносит магический урон тому, кто его убьёт. На третьем уровне получает эффект True Sight, раскрывающий невидимость.$Здоровье: 700 / 800 / **900**$Урон: 75 / 100 / **125**$Сжигает маны: 30 / 40 / **50**$Урон за убийство: 600 / 700 / **800**$$__Лучник:__$Имеет ауру, увеличивающую скорость атаки и передвижения союзников. На третьем уровне получает способность, развеивающую положительные эффекты противника.$Здоровье: 700 / 800 / **900**$Урон: 60 / 90 / **120**$Доп. скорость передвижения: 5 / 7 / **9**$Доп. скорость атаки: 5 / 10 / **15**$Радиус ауры: **1200**$$', 'cooldown': ['90'], 'mana_cost': ['50'], 'cost': 5000, 'stacks': False, 'side_shop': False, 'secret_shop': False, 'attr_en': ['+10 / 15 / **20** Strength', '+2 / 2.5 / **3** Mana Regeneration'], 'attr_ru': ['+10 / 15 / **20** к силе', '+2 / 2.5 / **3** к восстановлению маны'], 'note_en': [], 'note_ru': [], 'lore_en': ['Considered the ultimate in necromancy and demonology, a powerful malefic force is locked within its pages.'], 'lore_ru': ['Наиболее полный свод знаний о некромантии и демонологии, скрывающий на своих страницах мощную тёмную магию.']}
-{'id': 201, 'name': 'Dagon II', 'aliases': ['dagon 2'], 'need_recipe': True, 'icon': 'dotabase/items/201.png', 'itemabs_en': '__Active: Energy Burst__$ Emits a powerful burst of magical damage upon a targeted enemy unit. Upgradable.$$Damage: 400 / **500** / 600 / 700 / 800$Range: 600 / **650** / 700 / 750 / 800$$', 'itemabs_ru': '__Активируемая: Energy Burst__$ Выпускает мощный всплеск энергии, наносящий магический урон выбранному вражескому существу. Предмет можно улучшить.$$Урон: 400 / **500** / 600 / 700 / 800$Дальность: 600 / **650** / 700 / 750 / 800$$', 'cooldown': ['35', '**30**', '25', '20', '15'], 'mana_cost': ['120', '**140**', '160', '180', '200'], 'cost': 3950, 'stacks': False, 'side_shop': False, 'secret_shop': False, 'attr_en': ['+13 / **16** / 19 / 22 / 25 Intelligence', '**+5** All Attributes'], 'attr_ru': ['+13 / **16** / 19 / 22 / 25 к интеллекту', '**+5** ко всем атрибутам'], 'note_en': ['Instantly kills illusions.'], 'note_ru': ['Мгновенно убивает иллюзии.'], 'lore_en': ['A lesser wand that grows in power the longer it is used, it brings magic to the fingertips of the user.'], 'lore_ru': ['Волшебная палочка, которая со временем становится лишь сильнее, наделяет владельца магией на кончиках пальцев.']}
-{'id': 202, 'name': 'Dagon III', 'aliases': ['dagon 3'], 'need_recipe': True, 'icon': 'dotabase/items/202.png', 'itemabs_en': '__Active: Energy Burst__$ Emits a powerful burst of magical damage upon a targeted enemy unit. Upgradable.$$Damage: 400 / 500 / **600** / 700 / 800$Range: 600 / 650 / **700** / 750 / 800$$', 'itemabs_ru': '__Активируемая: Energy Burst__$ Выпускает мощный всплеск энергии, наносящий магический урон выбранному вражескому существу. Предмет можно улучшить.$$Урон: 400 / 500 / **600** / 700 / 800$Дальность: 600 / 650 / **700** / 750 / 800$$', 'cooldown': ['35', '30', '**25**', '20', '15'], 'mana_cost': ['120', '140', '**160**', '180', '200'], 'cost': 5200, 'stacks': False, 'side_shop': False, 'secret_shop': False, 'attr_en': ['+13 / 16 / **19** / 22 / 25 Intelligence', '**+5** All Attributes'], 'attr_ru': ['+13 / 16 / **19** / 22 / 25 к интеллекту', '**+5** ко всем атрибутам'], 'note_en': ['Instantly kills illusions.'], 'note_ru': ['Мгновенно убивает иллюзии.'], 'lore_en': ['A lesser wand that grows in power the longer it is used, it brings magic to the fingertips of the user.'], 'lore_ru': ['Волшебная палочка, которая со временем становится лишь сильнее, наделяет владельца магией на кончиках пальцев.']}
-{'id': 203, 'name': 'Dagon IV', 'aliases': ['dagon 4'], 'need_recipe': True, 'icon': 'dotabase/items/203.png', 'itemabs_en': '__Active: Energy Burst__$ Emits a powerful burst of magical damage upon a targeted enemy unit. Upgradable.$$Damage: 400 / 500 / 600 / **700** / 800$Range: 600 / 650 / 700 / **750** / 800$$', 'itemabs_ru': '__Активируемая: Energy Burst__$ Выпускает мощный всплеск энергии, наносящий магический урон выбранному вражескому существу. Предмет можно улучшить.$$Урон: 400 / 500 / 600 / **700** / 800$Дальность: 600 / 650 / 700 / **750** / 800$$', 'cooldown': ['35', '30', '25', '**20**', '15'], 'mana_cost': ['120', '140', '160', '**180**', '200'], 'cost': 6450, 'stacks': False, 'side_shop': False, 'secret_shop': False, 'attr_en': ['+13 / 16 / 19 / **22** / 25 Intelligence', '**+5** All Attributes'], 'attr_ru': ['+13 / 16 / 19 / **22** / 25 к интеллекту', '**+5** ко всем атрибутам'], 'note_en': ['Instantly kills illusions.'], 'note_ru': ['Мгновенно убивает иллюзии.'], 'lore_en': ['A lesser wand that grows in power the longer it is used, it brings magic to the fingertips of the user.'], 'lore_ru': ['Волшебная палочка, которая со временем становится лишь сильнее, наделяет владельца магией на кончиках пальцев.']}
-{'id': 204, 'name': 'Dagon V', 'aliases': ['dagon 5'], 'need_recipe': True, 'icon': 'dotabase/items/204.png', 'itemabs_en': '__Active: Energy Burst__$ Emits a powerful burst of magical damage upon a targeted enemy unit.$$Damage: 400 / 500 / 600 / 700 / **800**$Range: 600 / 650 / 700 / 750 / **800**$$', 'itemabs_ru': '__Активируемая: Energy Burst__$ Выпускает мощный всплеск энергии, наносящий магический урон выбранному вражескому существу.$$Урон: 400 / 500 / 600 / 700 / **800**$Дальность: 600 / 650 / 700 / 750 / **800**$$', 'cooldown': ['35', '30', '25', '20', '**15**'], 'mana_cost': ['120', '140', '160', '180', '**200**'], 'cost': 7700, 'stacks': False, 'side_shop': False, 'secret_shop': False, 'attr_en': ['+13 / 16 / 19 / 22 / **25** Intelligence', '**+5** All Attributes'], 'attr_ru': ['+13 / 16 / 19 / 22 / **25** к интеллекту', '**+5** ко всем атрибутам'], 'note_en': ['Instantly kills illusions.'], 'note_ru': ['Мгновенно убивает иллюзии.'], 'lore_en': ['A lesser wand that grows in power the longer it is used, it brings magic to the fingertips of the user.'], 'lore_ru': ['Волшебная палочка, которая со временем становится лишь сильнее, наделяет владельца магией на кончиках пальцев.']}
-'''
-def updateitems_no_als():
+def updateitems_no_als():  ##без прозвищ (например Black King Bar - bkb) т.к. большинство было нужно вводить вручную 
     session = dotabase_session()
     itemswrec=[]
     count=0
@@ -482,9 +471,8 @@ def updateitems_no_als():
                         f.write("{0}\n".format(iteminfo))
                         count+=1
                         print(count)
-#updateitems_no_als()
                         
-def updateitems_with_als():
+def updateitems_with_als(): ##full update
     with open('dotabase/items.txt', 'w') as f:
         session = dotabase_session()
         itemswrec=[]
@@ -693,16 +681,10 @@ def updateitems_with_als():
             f.write("{0}\n".format(iteminfo))
             count+=1
             print(count)
-#updateitems_with_als()
 
-
-
-#with open('dotabase/items.txt', 'r') as f:
-#    l=f.readlines()
-#    pp(dict(eval(l[127])))
-  #  pp(dict(eval(l[78])))
 
 '''
+ABILITY DATA EXAMPLE
 {'ags_en': None,
  'ags_ru': None,
  'attr_en': ['CAST RANGE: **900**',
@@ -889,7 +871,7 @@ def updateabils():
                         j+=1
                 abinfo['lore_en']=str(en['language'][0].get('lore',None))
                 abinfo['lore_ru']=str(ru['language'][0].get('lore',None))
-                abinfo['lore_ru']=abinfo['lore_ru'].replace('é','е')
+                abinfo['lore_ru']=abinfo['lore_ru'].replace('é','е')  ##ерроры с кодировкой
                 abinfo['desc_ru']=abinfo['desc_ru'].replace('ó','о')
                 abinfo['lore_en']=abinfo['lore_en'].replace('é','e')
             stat=en.get('stat',None)
@@ -914,12 +896,6 @@ def updateabils():
             count+=1
             print(count)
 
-#with open('dotabase/abilities.txt', 'r') as f:
-#    l=f.readlines()
-#    pp(dict(eval(l[467])))
-   # pp(dict(eval(l[234])))
-    #pp(dict(eval(l[434])))
-
 
 '''
 <:vision:591659960794873858>
@@ -934,7 +910,7 @@ def updateabils():
 <:armor:591659959960469524>
 <:agi:591659959905812500>
 '''
-## итемы ` ` , абилки __ __, герои ** **
+## итемы ` ` , абилки __ __, герои ** **  <-- выделение 
 
 #                 \n"+u"\u2022"+"       u"\u2800"
 
@@ -1037,31 +1013,16 @@ dota_mechanics = {'en':{'Attributes':{'Strength':{"__Strength__<:str:59165996109
                                  'Рошан':{"__Рошан__":"Самый сильный нейтральный монстр в Dota 2. Он с легкостью одолевает большинство героев один на один. Игроки обычно ждут поздней фазы игры, когда фарм-герои соберут свои лучшие предметы, или пробуют убить его всей командой.","Логово Рошана":"Рошана можно найти в его логове, которое находится немного выше верхней руны. Вход соединен с рекой и повернут к югу. Рошан всегда стоит в конце логова если не атакует, и будет атаковать только если вражеские юниты подойдут к нему на расстояние 150 или нанесут урон с расстояния 1800. Рошан не может быть атакован вне логова;но сам может атаковать везде.\n\nЕдинственный способ получить обзор внутри логова — войти в него. Юниты с наземным обзором (включая варды и другие заклинания) из вне не могут видеть логово, не важно как близко их дальность обзора или если они на возвышености, например, на местах вардов. Варды не могут быть поставлены внутри логова. Юниты с летающим обзором могут видеть внутри логова даже если они вне его.","Смерть Рошана":"Каждый игрок убившей команды получает 150 надёжного золота. Герой который лично добил Рошана получит 150‒400 золота, в среднем получая 300–550 золота.\nПосле каждой смерти из Рошана всегда выпадает Aegis of the Immortal, непередаваемый предмет при поднятии, который дает владельцу вторую жизнь, реинкарнируя после смерти с задержкой в 5 секунд на месте смерти. Если носитель Aegis of the Immortal не умрёт в течении 5 минут после поднятия, он пропадёт из инвентаря и полностью восстановит здоровье и ману за краткий период времени. Восстановление отменяется при получении любого урона свыше 20, включая урон самому себе. Если Aegis of the Immortal не был подобран и был оставлен на земле, он исчезнет при возрождении Рошана.\nAegis of the Immortal может быть украден игроком команды, не совершившей убийство Рошана. Его также можно добить обычной атакой.",u"\u2800":"После второй смерти Рошана и следующие разы, с него также выпадает Cheese, передаваемый расходуемый предмет, который может быть продан за 500 золота игроком который первым его поднимет, или использован для мгновенного восстановления здоровья и маны. Как и Aegis, Cheese может также подобрать каждый. После третьей смерти Рошана с него может выпасть Aghanim's Scepter (Consumable) или Refresher Shard, передаваемый предмет, можно продать за 500 золота, при использовании сбрасывает перезарядки способностей и предметов, не тратит ману. При выделении Рошана можно узнать, какой именно предмет выпадет после его смерти. После четвёрой смерти Рошана и следующие разы, с него гарантировано выпадает Aghanim's Scepter (Consumable) и Refresher Shard.","Возрождение Рошана":"Рошан возрождается как и другие нейтральные монстры, однако не в фиксированный момент времени, а через 8-11 минут после своей смерти (время выбирается случайным образом). Воскрешение Рошана невозможно предотвратить(в отличие от остальных нейтральных монстров), установив варды и/или стоя в месте его воскрешения."}}}}
 
 '''
-count=0                                             
-for lang in dota_mechanics.keys():
-    print("1111111111111111111"+lang)
-    for cat in dota_mechanics[lang].keys():
-        print("2222222222"+cat)
-        for mec in dota_mechanics[lang][cat].keys():
-            print("333"+mec)
-            for paragraph in dota_mechanics[lang][cat][mec].keys():
-                print(paragraph)
-                dota_mechanics[lang][cat][mec][paragraph] = highlight(dota_mechanics[lang][cat][mec][paragraph])
-                count+=1
-                #print(count)
-
 with open('dotabase/tome.txt', 'w', encoding='utf-8') as f:
     f.write(str(dota_mechanics))
 '''
 
-
-
-#updatepatchnotes()
+updatepatchnotes()
 
 updateitems_no_als()
 updateabils()
 updateheroes()
-
+#updateversion()
 
 
 

@@ -14,6 +14,7 @@ from discord.ext import tasks, commands
 import time
 import datetime
 from time import time as currenttime
+from time import ctime,gmtime,strftime
 import shutil
 import logging
 from pprint import pprint as pp
@@ -23,8 +24,8 @@ logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
-
-TOKEN = 'NTM3MjcyNjk0MDE4OTMyNzU0.XZmnig.SA5pyuNpuG54t1clKQ_XcK9Sryc'
+with open('token.txt','r') as f:
+    TOKEN=f.read()
 client = discord.Client()
 
 
@@ -196,6 +197,8 @@ async def on_message(message):
                     break
             await prefixmsg.add_reaction("✅")
             pref=prefixmsg.content
+            embedinfo.remove_field(1)
+            embedinfo.insert_field_at(1,name=f"{responses[f'{lang}']['cur_pref']}", value=f"{prefixmsg.content}",inline=True)
             await msg.edit(embed=embedinfo)
             
             
@@ -240,17 +243,12 @@ async def on_message(message):
         except:
             pref='!'
 
-        command=message.content.split()
-        if len(command)>1:
-            if command[1].lower()=='private':
-                adres=message.author
-            else:
-                adres=message.channel
-        else:
-            adres=message.channel
         responses={"en":{"bad_steamid":"User with this ID was not found",
+                         "invalid_id":"Invalid ID",
                          "error":"An error occured",
-                         "later":"Make sure your profile is public and try again in a bit",
+                         "recent_unav":"Recent matches unavailable. Maybe [OpenDota](https://www.opendota.com) is down?",
+                         "later":"Make sure this profile is public and try again in a bit",
+                         "private":"This profile is private",
                          "no_steamid":f'Your SteamID is not in the database. Send a message with your ID after {pref[0]}steamid',
                          "dotaprof":"DOTA 2 profile",
                          "rpgprof":"RPG profile",
@@ -261,19 +259,20 @@ async def on_message(message):
                          "BCpart":"Battle Cup participations",
                          "BCwins":"Battle Cup victories",
                          "top_heroes":"Top heroes",
-                         "mostmatchesheroes":"Most matches",
+                         "mostmatchesheroes":"Most picked heroes",
                          "topwinrateheroes":"Highest winrate",
-                         "currch":"Current challenge", 
-                         "reward":"Reward",
-                         "conds":"Conditions",
-                         "condsnext":"Complete the challenge within the next game",
-                         "conds2days":"Complete the challenge within 2 days",
-                         "start_time":"Start time",
-                         "time_left":"Time left"},
+                         'recent':'Recent matches',
+                         'date':'Date',
+                         'id':'Match ID',
+                         'hero':'Hero',
+                         'gm':'Game mode'},
                          
                    "ru":{"bad_steamid":"Пользователь с таким ID не найден",
+                         "invalid_id":"Недопустимый ID",
                          "error":"Возникла ошибка",
-                         "later":"Убедитесь, что ваш профиль публичный и попробуйте через пару минут",
+                         "recent_unav":"Недавние матчи недоступны. Может [OpenDota](https://www.opendota.com) не работает?",
+                         "later":"Убедитесь, что этот профиль публичный и попробуйте через пару минут",
+                         "private":"История матчей этого профиля приватна",
                          "no_steamid":f'Вашего SteamID нет в базе данных. Введите ваш ID после команды {pref[0]}steamid',
                          "dotaprof":"Профиль DOTA 2",
                          "rpgprof":"RPG Профиль",
@@ -286,42 +285,78 @@ async def on_message(message):
                          "top_heroes":"Лучшие герои",
                          "mostmatchesheroes":"Наибольшее число матчей",
                          "topwinrateheroes":"Наибольшая доля побед",
-                         "randomch":"Текущее испытание",
-                         "reward":"Награда",
-                         "conds":"Условия",
-                         "condsnext":"Пройдите испытание во время следующей игры",
-                         "conds2days":"Пройдите испытание в течение двух дней",
-                         "start_time":"Время начала",
-                         "time_left":"Осталось времени"}}
+                         'recent':'Недавние матчи',
+                         'date':'Дата',
+                         'id':'ID матча',
+                         'hero':'Герой',
+                         'gm':'Режим игры'}}
 
         phr=responses[lang]
-
-        
         if pref==message.content[0]:
-            with open('dotabase/userprofiles.txt','r') as f:
-                lines=f.readlines()
-            user_exists=False
-            for line in lines:
-                CurUser=dict(eval(line))
-                if CurUser['discord_id']==message.author.id:
-                    userfile=CurUser
-                    user_exists=True
-                    await message.add_reaction("⏳")
-                    break
-            if user_exists==False:
-                await message.channel.send(phr['no_steamid'])
+            await message.add_reaction("⏳")
+            
+            playerid,adres=None,None
+            command=message.content.split()
+            if len(command)==2:                 ##разбор запроса пользователя
+                if command[1].isdigit():
+                    playerid=command[1]
+                    adres=message.channel
+                elif command[1].lower()=='private':
+                    user=get_user(message.author.id)
+                    if user!=None:
+                        playerid=user['steam_id']
+                    else:
+                        await message.channel.send(phr['no_steamid'])
+                        return
+                    adres=message.author
+                else:
+                    await message.channel.send(phr["error"])
+                    return
+                
+            elif len(command)==3:
+                if command[2].lower()=='private':
+                    adres=message.author
+                    if command[1].isdigit():
+                        playerid=command[1]
+                    else:
+                        await message.channel.send(phr["invalid_id"])
+                        return                               
+                elif command[1].lower()=='private':
+                    adres=message.author
+                    if command[2].isdigit():
+                        playerid=command[2]
+                    else:
+                        await message.channel.send(phr["invalid_id"])
+                        return  
+                else:
+                    await message.channel.send(phr["error"])
+                    return                    
+            else:
+                user=get_user(message.author.id)
+                if user!=None:
+                    playerid=user['steam_id']
+                else:
+                    await message.channel.send(phr['no_steamid'])
+                    return
+                adres=message.channel
+
+                
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"https://api.stratz.com/api/v1/Player/{playerid}") as r:
+                        user=json.loads(await r.text())
+            except:
+                if int(r.status)==403:       ##403 - доступ запрещен --> профиль приватный
+                    await message.channel.send(f'{phr["error"]}: {phr["private"]}')
+                else:
+                    await message.channel.send(f'{phr["error"]}: {r.status}. {phr["later"]}')
                 return
             
-            try:                    #запрос инфы о юзере
-                r = requests.get(f"https://api.stratz.com/api/v1/Player/{userfile['steam_id']}")
-                user=json.loads(r.text)
-            except:
-                await message.channel.send(f'{phr["error"]}: {r.status_code}. {phr["later"]}')
-                return
             bk_profile=''
-            try:                    #запрос инфы о бк  
-                r = requests.get(f"https://api.stratz.com/api/v1/Player/{userfile['steam_id']}/matches?lobbyType=9&take=250")
-                bkinfo=json.loads(r.text)
+            try:                    #запрос инфы о боевом кубке
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"https://api.stratz.com/api/v1/Player/{playerid}/matches?lobbyType=9&take=250") as r:
+                        bkinfo=json.loads(await r.text())
                 trophy=''
                 countbk,countt,countparts=0,0,0
                 for el in reversed(bkinfo):
@@ -337,24 +372,14 @@ async def on_message(message):
                 if countbk>0:
                     trophy=u"\U0001F3C6"
                 bk_profile=phr['BCpart']+': **'+str(countparts)+'**\n'+phr['BCwins']+f': {trophy}**'+str(countbk)+'**'
-            except Exception as e:
-                await message.channel.send(f'{phr["error"]}: {r.status_code}. {phr["later"]}')
-                return
-            plus=user['steamAccount'].get('isDotaPlusSubscriber',False)
-            '''
-            try:
-                bp=user['battlePass'][-1].get('level',None)
             except:
-                bp=None
-            if bp!=None:
-                plus_bp+='<:battle_pass:591631736492785696>'
-            '''
-            plus_bp=''
-            if plus==True:
-                plus_bp+='<:dotaplus:591631737172393997>'
+                pass
+            plus=''
+            if user['steamAccount'].get('isDotaPlusSubscriber',False):
+                plus+='<:dotaplus:591631737172393997>'
 
             steam_url=user["steamAccount"].get("profileUri","https://discordapp.com")               
-            embed = discord.Embed(title=f'**{user["steamAccount"]["name"]}**'+plus_bp,colour=discord.Colour(0xccc21f),url=steam_url)
+            embed = discord.Embed(title=f'**{user["steamAccount"]["name"]}**'+plus,colour=discord.Colour(0xccc21f),url=steam_url)
 
             matches=user.get('matchCount',0)
             wins=user.get('winCount',0)
@@ -365,16 +390,20 @@ async def on_message(message):
             frank=discord.File(fp=f"{rank}.png")
             embed.set_thumbnail(url=f"attachment://{rank}.png") 
            
-            embed.add_field(name=phr['dotaprof'],value=dota_profile+'\n'+bk_profile,inline=False)
+            embed.add_field(name='**'+phr['dotaprof']+'**',value=dota_profile+'\n'+bk_profile,inline=False)
 
             most_heroes=''
             best_heroes=''
-            try:                    #запрос инфы о топ героях юзера
-                r = requests.get(f"https://api.stratz.com/api/v1/Player/{userfile['steam_id']}/heroPerformance")
-                bestheroes=json.loads(r.text)
-                mostheroes=json.loads(r.text)
-            except Exception as e:
-                message.channel.send(f'{phr["error"]}: {e}. {phr["later"]}')
+            try:           #запрос инфы о топ героях юзера
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"https://api.stratz.com/api/v1/Player/{playerid}/heroPerformance") as r:
+                        bestheroes=json.loads(await r.text())
+                        mostheroes=json.loads(await r.text())
+            except:
+                if int(r.status)==403:
+                    await message.channel.send(f'{phr["error"]}: {phr["private"]}')
+                else:
+                    await message.channel.send(f'{phr["error"]}: {r.status}. {phr["later"]}')
                 return
             most_h_list=[]
             best_h_list=[]
@@ -402,19 +431,303 @@ async def on_message(message):
                     if hero['id']==el['heroId']:
                         wr=str(int(el['winCount']/el['matchCount']*100))+'%'
                         best_heroes+='<'+hero['emoji']+'>'+u"\u2800"+'**'+wr+f'** ({el["winCount"]} / {el["matchCount"]-el["winCount"]})'+'\n'
-            embed.add_field(name=phr['mostmatchesheroes'],value=most_heroes,inline=True)
-            embed.add_field(name=phr['topwinrateheroes'],value=best_heroes,inline=True)
-
-            
+            embed.add_field(name='__'+phr['mostmatchesheroes']+'__',value=most_heroes,inline=True)
+            embed.add_field(name='__'+phr['topwinrateheroes']+'__',value=best_heroes,inline=True)
+            try:
+                lobby={-1:'Invalid',0:'Unranked',1:'Practice',2:'Tournament',3:'Tutorial',4:'Coop vs Bots',5:'Team Match',6:'Solo Queue',7:'Ranked',8:'Solo Mid',9:'Battle Cup'}
+                gamemodes={1:"All Pick",2:"Captains Mode",3:"Random Draft",4:"Single Draft",5:"All Random",11:"Mid Only",12:"Least Played",15:"Custom Mode",16:"Captains Draft",18:"Ability Draft",19:"Event",20:"All Random Deathmatch",21:"1v1 Solo Mid",22:"All Pick",23:"Turbo"}
+                recent_matches=''
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"https://api.opendota.com/api/players/{playerid}/recentMatches") as r:
+                        recent = json.loads(await r.text())
+                        if len(recent)>10:
+                            recent=recent[:10]
+                        for match in recent:
+                            for line in lines:
+                                hero=dict(eval(line))
+                                if hero['id']==match['hero_id']:
+                                    win='**Lose**'
+                                    if match['radiant_win'] and match['player_slot']<=127:
+                                        win='**Win**'
+                                    if not match['radiant_win'] and match['player_slot']>127:
+                                        win='**Win**'
+                                    if lobby.get(match['lobby_type'],'')=='Ranked':
+                                        recent_matches+='<'+hero['emoji']+'>'+u"\u2800"*2+strftime('%H:%M %d/%m/%y',gmtime(match['start_time']))+u"\u2800"*2+str(match['match_id'])+u"\u2800"*2+lobby.get(match['lobby_type'],'')+' '+gamemodes.get(match['game_mode'],'')+'\n'
+                                    else:
+                                        recent_matches+='<'+hero['emoji']+'>'+u"\u2800"*2+strftime('%H:%M %d/%m/%y',gmtime(match['start_time']))+u"\u2800"*2+str(match['match_id'])+u"\u2800"*2+gamemodes.get(match['game_mode'],'')+'\n'
+                        embed.add_field(name='__'+phr['recent']+'__\n'+phr['hero']+u"\u2800"*2+phr['date']+u"\u2800"*8+phr['id']+u"\u2800"*5+phr['gm'],value=recent_matches)
+                        len(recent_matches)
+                                        
+            except:
+                embed.add_field(name='__'+phr['recent']+'__\n'+phr['hero']+u"\u2800"*2+phr['date']+u"\u2800"*8+phr['id']+u"\u2800"*5+phr['gm'],value=phr['recent_unav'])
             await adres.send(embed=embed,file=frank)
             await message.clear_reactions()
             remove(f'{rank}.png') 
              
-###Испытание
+###history
+    if message.content.startswith('matches',1):
+        try:
+            lang=getlang(message.guild.id)
+        except:
+            lang='en'
+        try:
+            pref=getpref(message.guild.id)
+        except:
+            pref='!'
+
+        responses={"en":{"bad_steamid":"User with this ID was not found",
+                         "error":"An error occured",
+                         "later":"Make sure this profile is public and try again in a bit",
+                         "private":"This profile is private",
+                         "no_steamid":f'Your SteamID is not in the database. Send a message with your ID after {pref[0]}steamid',
+                         "dotaprof":"DOTA 2 profile",
+                         "rpgprof":"RPG profile",
+                         "lvl":"Level",
+                         "rpgitems":"Items",
+                         "matchcount":"Total matches",
+                         'history':'Match history',
+                         'date':'Date',
+                         'id':'Match ID',
+                         'hero':'Hero',
+                         'gm':'Game mode',
+                         'matches':'Matches of player ',
+                         'all':'All ',
+                         'won':'Matches won by player ',
+                         'lost':'Matches lost by player ',
+                         'as':' as ',
+                         'with':' with ',
+                         'and':' and ',
+                         'against':' against ',
+                         'patch':' during patch ',
+                         '404':'Nothing here('},
+                         
+                   "ru":{"bad_steamid":"Пользователь с таким ID не найден",
+                         "error":"Возникла ошибка",
+                         "later":"Убедитесь, что этот профиль публичный и попробуйте через пару минут",
+                         "private":"История матчей этого профиля приватна",
+                         "no_steamid":f'Вашего SteamID нет в базе данных. Введите ваш ID после команды {pref[0]}steamid',
+                         "rpgitems":"Предметы",
+                         "matchcount":"Всего матчей",
+                         'history':'Match history',
+                         'date':'Дата',
+                         'id':'ID матча',
+                         'hero':'Герой',
+                         'gm':'Режим игры',
+                         'matches':'Матчи игрока ',
+                         'all':'Все ',
+                         'won':'Выигранные матчи игрока ',
+                         'lost':'Проигранные матчи игрока ',
+                         'as':' за ',
+                         'with':' с ',
+                         'and':' и ',
+                         'against':' против ',
+                         'patch':' в патче ',
+                         '404':'Пусто('}}
+                
+        phr=responses[lang]
+        command=message.content+' '
+        if pref==message.content[0]:
+            user=get_user(message.author.id)
+            if user!=None:
+                playerid=user['steam_id']
+            else:
+                await message.channel.send(phr['no_steamid'])
+                return
+            await message.add_reaction("⏳")
+            '''
+            version = None       #версия игры
+            with open('dotabase/version.txt','r') as f:
+                versions=dict(eval(f.read()))
+                for ver in versions.keys():
+                    if ver in command:
+                        version = versions[ver]
+                        break
+            ''' 
+            win = None        #победа / поражение
+            if 'win' in command or 'won' in command or 'victory' in command:
+                win=1
+            if 'lose' in command or 'lost' in command:
+                win=0
+            sign = 1
+            if ' all ' in command:
+                sign=0
+            
+            hero = None   #Герой пользователя и герои в команде союзников / врагов
+            allies,enemies=[],[]
+            searchcom=command.replace('-','')
+            searchcom=searchcom.replace('+','')
+            with open('dotabase/heroes.txt','r', encoding='utf-8-sig') as f:
+                heroes=f.readlines()
+                for fhero in heroes:
+                    h=dict(eval(fhero))
+                    if any(al in searchcom.split() for al in h['aliases']):
+                        for al in h['aliases']:
+                            alindex=command.find(al)
+                            if alindex!=-1:
+                                if command[alindex-1]==' ':
+                                    hero={'name':h['name'],'id':h['id'],'emoji':h['emoji']}
+                                elif command[alindex-1]=='-':
+                                    enemies.append({'name':h['name'],'id':h['id'],'emoji':h['emoji']})
+                                elif command[alindex-1]=='+':
+                                    allies.append({'name':h['name'],'id':h['id'],'emoji':h['emoji']})
+                
+                    elif command.find(h['name'].lower())!=-1:
+                        index=command.find(h['name'].lower())
+                        if index!=-1:
+                            if command[index-1]==' ':
+                                hero={'name':h['name'],'id':h['id'],'emoji':h['emoji']}
+                            elif command[index-1]=='-':
+                                enemies.append({'name':h['name'],'id':h['id'],'emoji':h['emoji']})
+                            elif command[index-1]=='+':
+                                allies.append({'name':h['name'],'id':h['id'],'emoji':h['emoji']})
+                    elif command.find((h['name'].replace("'","")).lower())!=-1:
+                        index=command.find((h['name'].replace("'","")).lower())
+                        if index!=-1:
+                            if command[index-1]==' ':
+                                hero={'name':h['name'],'id':h['id'],'emoji':h['emoji']}
+                            elif command[index-1]=='-':
+                                enemies.append({'name':h['name'],'id':h['id'],'emoji':h['emoji']})
+                            elif command[index-1]=='+':
+                                allies.append({'name':h['name'],'id':h['id'],'emoji':h['emoji']})
+                                
+            # passing an array --> https://api.opendota.com/api/players/130403136/matches?with_hero_id[]=31&with_hero_id[]=102
+            query=f'https://api.opendota.com/api/players/{playerid}/matches?limit=100&'
+            params,desc=[],''
+            
+            if sign==0:
+                params.append(f"significant=0")
+                desc+=phr['all']
+                
+            if win!=None:
+                params.append(f"win={win}")
+                if sign==0:
+                    if win==1:
+                        desc+=phr['won'].lower()+str(playerid)
+                    else:
+                        desc+=phr['lost'].lower()+str(playerid)
+                else:
+                    if win==1:
+                        desc+=phr['won']+str(playerid)
+                    else:
+                        desc+=phr['lost']+str(playerid)
+            else:
+                if sign==0:
+                    desc+=phr['matches'].lower()+str(playerid)
+                else:
+                    desc+=phr['matches']+str(playerid)
+                
+            if hero!=None:
+                params.append(f"hero_id={hero['id']}")
+                desc+=phr['as']+f'<{hero["emoji"]}>**{hero["name"]}**'
+                
+                
+            if allies!=[]:
+                if len(allies)>1:
+                    al=[]
+                    for ally in allies:
+                        params.append(f"with_hero_id[]={ally['id']}")
+                        al.append(f'<{ally["emoji"]}>**{ally["name"]}**')
+                    desc+=phr['with']+phr['and'].join(al)
+                else:
+                    params.append(f"with_hero_id={allies[0]['id']}")
+                    desc+=phr['with']+f'<{allies[0]["emoji"]}>**{allies[0]["name"]}**'
+            if enemies!=[]:
+                if len(enemies)>1:
+                    en=[]
+                    for enemy in enemies:
+                        params.append(f"against_hero_id[]={enemy['id']}")
+                        en.append(f'<{enemy["emoji"]}>**{enemy["name"]}**')
+                    desc+=phr['against']+phr['and'].join(en)
+                else:
+                    params.append(f"against_hero_id={enemies[0]['id']}")
+                    desc+=phr['against']+f'<{enemies[0]["emoji"]}>**{enemies[0]["name"]}**'               
+            '''
+            if version!=None:
+                params.append(f"patch={version}")
+                desc+=phr['patch']+ver
+            '''
+            query=query+"&".join(params)
+            try:           
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(query) as r:
+                        matches=json.loads(await r.text())
+            except:
+                await message.channel.send(f'{phr["error"]}: {r.status}')
+                return
+
+            page_emojis=['<:page_1:599965301496348722>','<:page_2:599965301466988545>','<:page_3:599965301504999444>','<:page_4:599965301496348711>','<:page_5:599965301500542995>','<:page_6:599965301295153153>','<:page_7:599965301366456342>','<:page_8:599965301513125898>','<:page_9:599965301500542987>','<:page_10:599965301525839897>']    
+            lobby={-1:'Invalid',0:'Unranked',1:'Practice',2:'Tournament',3:'Tutorial',4:'Coop vs Bots',5:'Team Match',6:'Solo Queue',7:'Ranked',8:'Solo Mid',9:'Battle Cup'}
+            gamemodes={1:"All Pick",2:"Captains Mode",3:"Random Draft",4:"Single Draft",5:"All Random",11:"Mid Only",12:"Least Played",15:"Custom Mode",16:"Captains Draft",18:"Ability Draft",19:"Event",20:"All Random Deathmatch",21:"1v1 Solo Mid",22:"All Pick",23:"Turbo"}
+            with open('dotabase/gamemodes.txt','r') as f:
+                gamemodes=dict(eval(f.read()))
+            with open('dotabase/lobby.txt','r') as f:
+                lobby=dict(eval(f.read()))
+            ##создание сообщения со списком игр
+            n=len(matches)
+            embed = discord.Embed(title=f'{phr["history"]}',colour=discord.Colour(0x22bf5a),url='https://www.opendota.com')
+            embed.set_footer(text=f"{client.user.name} | {pref}matches | {phr['matchcount']}: {n}", icon_url=client.user.avatar_url_as(format='png'))
+            embed.description=desc
+            countm,countp,pages=0,0,{}
+            page=''
+            for match in matches:
+                if hero!=None:
+                    if lobby.get(match['lobby_type'],'')=='Ranked':
+                        page+='<'+hero['emoji']+'>'+u"\u2800"*2+strftime('%H:%M %d/%m/%y',gmtime(match['start_time']))+u"\u2800"*2+str(match['match_id'])+u"\u2800"*2+lobby.get(match['lobby_type'],'')+' '+gamemodes.get(match['game_mode'],'')+'\n'
+                    else:
+                        page+='<'+hero['emoji']+'>'+u"\u2800"*2+strftime('%H:%M %d/%m/%y',gmtime(match['start_time']))+u"\u2800"*2+str(match['match_id'])+u"\u2800"*2+gamemodes.get(match['game_mode'],'')+'\n'
+                else:
+                    for fhero in heroes:
+                        h=dict(eval(fhero))
+                        if h['id']==match['hero_id']:
+                            if lobby.get(match['lobby_type'],'')=='Ranked':
+                                page+='<'+h['emoji']+'>'+u"\u2800"*2+strftime('%H:%M %d/%m/%y',gmtime(match['start_time']))+u"\u2800"*2+str(match['match_id'])+u"\u2800"*2+lobby.get(match['lobby_type'],'')+' '+gamemodes.get(match['game_mode'],'')+'\n'
+                            else:
+                                page+='<'+h['emoji']+'>'+u"\u2800"*2+strftime('%H:%M %d/%m/%y',gmtime(match['start_time']))+u"\u2800"*2+str(match['match_id'])+u"\u2800"*2+gamemodes.get(match['game_mode'],'')+'\n'
+                            break
+                countm+=1
+                if countm==10:
+                    if len(matches)==10:
+                        embed.add_field(name=phr['hero']+u"\u2800"*2+phr['date']+u"\u2800"*8+phr['id']+u"\u2800"*5+phr['gm'],value=page)
+                        hist = await message.channel.send(embed=embed)
+                        return
+                    pages[page_emojis[countp]]=page
+                    countp+=1
+                    countm=0
+                    page=''
+                if n==countm+countp*10 and n%10!=0:
+                    pages[page_emojis[countp]]=page
+
+                    
+            if countp==0 and countm==0:
+                embed.clear_fields()
+                embed.add_field(name=phr['hero']+u"\u2800"*2+phr['date']+u"\u2800"*8+phr['id']+u"\u2800"*5+phr['gm'],value=phr['404'])
+                hist = await message.channel.send(embed=embed)
+                return
+            if countm<10 and countp==0:
+                embed.add_field(name=phr['hero']+u"\u2800"*2+phr['date']+u"\u2800"*8+phr['id']+u"\u2800"*5+phr['gm'],value=page)
+                hist = await message.channel.send(embed=embed)
+            else:
+                embed.add_field(name=phr['hero']+u"\u2800"*2+phr['date']+u"\u2800"*8+phr['id']+u"\u2800"*5+phr['gm'],value=pages['<:page_1:599965301496348722>'])
+                hist = await message.channel.send(embed=embed)
+                for pagenumber in pages.keys():
+                    await hist.add_reaction(pagenumber)
+                await hist.add_reaction('❌')
+            
+                def check(reaction,user):
+                    return user.id==message.author.id and reaction.message.id==hist.id
+            
+                react = await client.wait_for("reaction_add",check=check)
+            
+                while str(react[0])!="❌":
+                    if str(react[0]) in pages.keys():
+                        embed.clear_fields()
+                        embed.add_field(name=phr['hero']+u"\u2800"*2+phr['date']+u"\u2800"*8+phr['id']+u"\u2800"*5+phr['gm'],value=pages[str(react[0])])
+                        await hist.edit(embed=embed)
+                    react = await client.wait_for("reaction_add",check=check)
+                await hist.clear_reactions()
+
 
             
-
-        
 #HELPHELPHELP
 
     if message.content.startswith('help',1):
@@ -432,7 +745,7 @@ async def on_message(message):
             if len(command)>=2:
                 await helpcom(message,client,command[1],lang,pref)
             else:
-                reacts=['<a:matchinfo:595952615599374337>','<:exp:593470312088338441>',u"\U0001F916"]
+                reacts=['<a:matchinfo:595952615599374337>','<:exp:593470312088338441>','<a:coinflip:594438507938709524>',u"\U0001F916"]
                 mainhelp = helpmain(message,client,lang,pref)
                 helpmsg = await message.channel.send(embed=mainhelp)
                 for react in reacts:
@@ -459,9 +772,11 @@ async def on_message(message):
                 await helpmsg.clear_reactions()
 
 
+#рандомки#         
 
+    await randomstuff(message,client)
 
-
+    await roll(message,client)
 
 
 ### информация
@@ -473,7 +788,6 @@ async def on_message(message):
     await dotainfo.abs(message,client)
 
     await dotainfo.item(message,client)
-
 
     await dotainfo.ability(message,client)
 
@@ -728,8 +1042,8 @@ async def on_message(message):
                 try:                    #запрос инфы о матче
                     if not stratz:
                         matchinfo = await get_match_od(matchid)
-                        todel = await message.channel.send(f'{phr["error"]}. {phr["oddown"]}')
                         if matchinfo==0:
+                            todel = await message.channel.send(f'{phr["error"]}. {phr["oddown"]}')
                             matchinfo = await get_match_stratz(matchid)
                             stratz=True
                             if matchinfo==0:
@@ -746,7 +1060,6 @@ async def on_message(message):
                     await message.channel.send(f'{phr["error"]}. {phr["later"]}')
                     await message.clear_reactions()
                     return
-                
                 if stratz:
                     var=variables['stratz']
                 else:
@@ -775,7 +1088,7 @@ async def on_message(message):
 
                 else:
                     lobby={-1:'Invalid',0:'Unranked',1:'Practice',2:'Tournament',3:'Tutorial',4:'Coop vs Bots',5:'Team Match',6:'Solo Queue',7:'Ranked',8:'Solo Mid',9:'Battle Cup'}
-                    gamemodes={1:"All Pick",2:"Captains Mode",3:"Random Draft",4:"Single Draft",5:"All Random",11:"Mid Only",12:"Least Played",15:"Custom Mode",16:"Captains Draft",18:"Ability Draft",19:"Event",20:"All Random Deathmatch",21:"1v1 Solo Mid",22:"Ranked All Pick",23:"Turbo"}
+                    gamemodes={1:"All Pick",2:"Captains Mode",3:"Random Draft",4:"Single Draft",5:"All Random",11:"Mid Only",12:"Least Played",15:"Custom Mode",16:"Captains Draft",18:"Ability Draft",19:"Event",20:"All Random Deathmatch",21:"1v1 Solo Mid",22:"All Pick",23:"Turbo"}
                     emblobby=lobby.get(matchinfo.get(var["lobby_type"],-1))
                     embmode=gamemodes.get(matchinfo.get(var["game_mode"],-1))
                     if embmode!=-1:
@@ -999,7 +1312,6 @@ async def on_message(message):
                         return user.id!=537272694018932754 and reaction.message.id==msg.id
         
                 react = await client.wait_for("reaction_add",check=check)
-                print(stratz)
                 while str(react[0])!="❌":
                     
                     if str(react[0])=="<:mapemoji:561636043204329556>" and not stratz:
@@ -1184,8 +1496,7 @@ async def on_message(message):
 
 
         phr=responses[f"{lang}"]
-        playerid = message.content[len('!steamid'):].strip()
-        
+        playerid = message.content.split()[1]
         if pref[0]==message.content[0]:
             with open('dotabase/userprofiles.txt','r') as f:
                 lines=f.readlines()
@@ -1193,10 +1504,15 @@ async def on_message(message):
             for line in lines:
                 CurUser=dict(eval(line))
                 if CurUser['discord_id']==message.author.id:
-                    r = requests.get(f"https://api.stratz.com/api/v1/Player/{playerid}")
-                    if r.status_code==404:
+                    try:               
+                        async with aiohttp.ClientSession() as session:
+                            async with session.get(f"https://api.stratz.com/api/v1/Player/{playerid}") as r:
+                                user=json.loads(await r.text())
+                    except:
+                        await message.channel.send(phr['error'])
+                    if r.status==404:
                         await message.channel.send(phr['bad_steamid'])
-                    elif r.status_code==200:
+                    elif r.status==200:
                         user=CurUser
                         f=open('dotabase/userprofiles.txt','w')
                         for line in lines:
@@ -1207,14 +1523,20 @@ async def on_message(message):
                                 t['steam_id']=playerid
                                 f.write("{0}\n".format(t))
                         f.close()
+                        await message.add_reaction("✅")
                         break
                     else:
                         await message.channel.send(f'{phr["error"]}:{r.status_code}')
             if user==None:               #проверка существует ли такой юзер
-                r = requests.get(f"https://api.stratz.com/api/v1/Player/{playerid}")
-                if r.status_code==404:
+                try:               
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(f"https://api.stratz.com/api/v1/Player/{playerid}") as r:
+                            user=json.loads(await r.text())
+                except:
+                    await message.channel.send(phr['error'])
+                if r.status==404:
                     await message.channel.send(phr['bad_steamid'])
-                elif r.status_code==200:
+                elif r.status==200:
                     base_profile={'discord_id':message.author.id,'steam_id':playerid,'inventory':{'gold':600,'lvl':0,'items':{}},'last_skip':0}
                     with open('dotabase/userprofiles.txt', 'a') as f:
                         f.write("{0}\n".format(base_profile))
@@ -1222,12 +1544,6 @@ async def on_message(message):
                 else:
                     await message.channel.send(f'{phr["error"]}:{r.status_code}')
 
-#рандомки#
-    #герой           
-    await randomhero(message,client)
-
-    #sovet
-    await randomtip(message,client)
 
 
     if message.content.startswith('flip',1):
@@ -1244,12 +1560,14 @@ async def on_message(message):
         responses={"en":{"flip":"That's a coinflip ༼ つ ◕_◕ ༽つ \nBut a better one ༼ つ ◕‿◕ ༽つ",
                          "bet":"You chose:",
                          "won":"You won",
+                         'result':"Result",
                          "lost":"You lost"},
                          
                    "ru":{"flip":"Подбрасывание монетки ༼ つ ◕_◕ ༽つ \nТолько лучше ༼ つ ◕‿◕ ༽つ",
                          "flip_info":"Выберите вашу ставку нажав соответствущую реакцию\nВыберите сторону монеты<a:coinflip:594438507938709524>\nОжидайте результат",
                          "bet":"Вы выбрали:",
                          "chooseside":"Выберите сторону",
+                         'result':"Результат",
                          "won":"Вы выиграли",
                          "lost":"Вы проиграли"}}
 

@@ -3,7 +3,7 @@ import requests
 import json
 import glob, os
 import random
-
+from tools import get_duration
 
 def chalstars(stars):
     starsimg=Image.open(f"dotabase/emoticons/{stars}star.png")
@@ -115,12 +115,7 @@ def makeadvgraph(duration,gold_adv,xp_adv,matchid):
     for i in range(duration//60):
         times.append(60*i)
     #прод-ть матча строкой 
-    mins=duration//60
-    if duration%60<10:  
-        sec="0"+str(duration%60)
-    else:
-        sec=duration%60
-    end="{0}:{1}".format(mins,sec)
+    end=get_duration(duration)
 
     #макс т мин преимущества в ед. золота и координата Y на шаблоне графика через которую проводится ось абсцисс
     mx=max(adv_by_min)
