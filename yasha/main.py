@@ -1563,9 +1563,9 @@ async def on_message(message):
                 if r.status==404:
                     await message.channel.send(phr['bad_steamid'])
                 elif r.status==200:
-                    base_profile={'discord_id':message.author.id,'steam_id':playerid,'inventory':{'gold':600,'lvl':0,'items':{}},'last_skip':0}
+                    base_profile={'discord_id':message.author.id,'steam_id':playerid}
                     with open('dotabase/userprofiles.txt', 'a') as f:
-                        f.write("{0}\n".format(base_profile))
+                        f.write("\n{0}".format(base_profile))
                     await message.add_reaction("✅")
                 else:
                     await message.channel.send(f'{phr["error"]}:{r.status_code}')
