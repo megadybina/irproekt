@@ -110,6 +110,7 @@ def makeplayerslots(player,stratz):
 def makeadvgraph(duration,gold_adv,xp_adv,matchid):
 
     #данные о матче
+    exp_by_min=xp_adv
     adv_by_min=gold_adv
     times=[]
     for i in range(duration//60):
@@ -118,11 +119,22 @@ def makeadvgraph(duration,gold_adv,xp_adv,matchid):
     end=get_duration(duration)
 
     #макс т мин преимущества в ед. золота и координата Y на шаблоне графика через которую проводится ось абсцисс
-    mx=max(adv_by_min)
-    mn=min(adv_by_min) 
+    mxgold=max(adv_by_min)
+    mngold=min(adv_by_min)
+    mxxp=max(exp_by_min)
+    mnxp=min(exp_by_min)
+    mx=max(mxgold,mxxp)
+    mn=min(mngold,mnxp)
     sm=abs(mx)+abs(mn)
     y=mx/sm*200+1
-    
+    radmax,diremax=abs(mx),abs(mn)
+    if mx<=0:
+        radmax=0
+        diremax=abs(mn)
+    if mn>=0:
+        radmax=abs(mx)
+        diremax=0
+        
     tens=[] ###каждая 10 минута
     for el in times:
         if el//60%10==0:
@@ -137,7 +149,6 @@ def makeadvgraph(duration,gold_adv,xp_adv,matchid):
     while tenkint<=abs(mn):
         tenkdire.append(tenkint)
         tenkint+=10000
-    
     #создание картинки    
     font = ImageFont.truetype(r"C:\WINDOWS\Fonts\arialbd.ttf", 10)
     img=Image.open("dotabase/graphT.png")
@@ -145,11 +156,12 @@ def makeadvgraph(duration,gold_adv,xp_adv,matchid):
 
     #####создание графика(оси,значения)
     draw.line([(400,0),(400,200)],fill="rgb(83,143,12)",width=2)
-    draw.line([(0,0),(400,0)],fill="rgb(83,143,12)",width=1)
-    draw.line([(0,200),(400,200)],fill="rgb(83,143,12)",width=1)
+    draw.line([(0,0),(440,0)],fill="rgb(83,143,12)",width=1)
+    draw.line([(0,200),(440,200)],fill="rgb(83,143,12)",width=1)
     draw.line([(0,y),(400,y)],fill="rgb(83,143,12)",width=2)
-    draw.text((367,2),str(abs(mx)),font=font,fill="rgb(255,255,255)")
-    draw.text((367,188),str(abs(mn)),font=font,fill="rgb(255,255,255)")
+    draw.text((404,0),str(radmax),font=font,fill="rgb(255,255,255)")
+    draw.text((404,189),str(diremax),font=font,fill="rgb(255,255,255)")
+    
     n=len(tens)
     for i in range(1,n+1):  #каждые 10 минут + время окончания матча
             pos=(i-1)/n*400
@@ -171,12 +183,12 @@ def makeadvgraph(duration,gold_adv,xp_adv,matchid):
     for i in range(n):
         if adv_by_min[i]>=0:
             x2=i/(n-1)*400
-            y2=y-y*(adv_by_min[i]/(abs(mx)+1))
+            y2=y-y*(adv_by_min[i]/(radmax+1))
             draw.line([(x1,y1),(x2,y2)],fill="rgb(238,227,43)",width=2)
             x1,y1=x2,y2
         else:
             x2=i/(n-1)*400
-            y2=y+(200-y)*(abs(adv_by_min[i])/(abs(mn)+1))
+            y2=y+(200-y)*(abs(adv_by_min[i])/(diremax+1))
             draw.line([(x1,y1),(x2,y2)],fill="rgb(238,227,43)",width=2)
             x1,y1=x2,y2
 

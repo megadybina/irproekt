@@ -483,8 +483,8 @@ async def abs(message,client):
                     t+=' | '.join([f'{cr}: {val}' for cr,val in res[hero][abil].items()])
                     t+='`\n'
                 counth+=1
-                if counth==10:
-                    if n==10:
+                if counth==8:
+                    if n==8:
                         embed.add_field(name=phr['list'],value=t)
                         await message.clear_reactions()
                         await message.channel.send(embed=embed)
@@ -493,7 +493,7 @@ async def abs(message,client):
                     countp+=1
                     counth=0
                     t=''
-                if n==counth+countp*10 and n%10!=0:
+                if n==counth+countp*8 and n%8!=0:
                     pages[page_emojis[countp]]=t
                     
             await message.clear_reactions()
@@ -503,7 +503,7 @@ async def abs(message,client):
                 embed.add_field(name=phr['list'],value=phr["bad_req"])
                 await message.channel.send(embed=embed)
                 return
-            if n<10:  #без создания реакций тк 1 страница
+            if n<8:  #без создания реакций тк 1 страница
                 embed.add_field(name=phr['list'],value=t)
                 await message.channel.send(embed=embed)
                 return
@@ -708,7 +708,7 @@ async def ability(message,client):
                             desc+=atr+'\n'
                     if abres.get('cast_point',[])!=[]:
                         castpoint=abres.get('cast_point')
-                        if castpoint==reversed(castpoint):
+                        if castpoint==list(reversed(castpoint)):
                             desc+=phr['cast_point'].upper()+': **'+str(castpoint[0])+'**\n'
                         else:
                             desc+=phr['cast_point'].upper()+': **'+'** / **'.join(str(i) for i in castpoint)+'**\n'
@@ -716,13 +716,13 @@ async def ability(message,client):
                         desc+='\n'
                     if abres.get('cooldown',[])!=[]:
                         cd=abres.get('cooldown')
-                        if cd==reversed(cd):
+                        if cd==list(reversed(cd)):
                             desc+='\n<:cooldown:595171442652479518> **'+str(cd[0])+'**'
                         else:
                             desc+='\n<:cooldown:595171442652479518> **'+'** / **'.join(str(i) for i in cd)+'**'
                     if abres.get('mana_cost',[])!=[]:
                         mc=abres.get('mana_cost')
-                        if mc==reversed(mc):
+                        if mc==list(reversed(mc)):
                             desc+='\n<:manacost:595172991567134721> **'+str(int(mc[0]))+'**'
                         else:
                             desc+='\n<:manacost:595172991567134721>'+'**'+'** / **'.join(str(int(i)) for i in mc)+'**'

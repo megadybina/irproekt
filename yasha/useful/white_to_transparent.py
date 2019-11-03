@@ -1,5 +1,5 @@
 from PIL import Image
-img = Image.open('00.png')
+img = Image.open('graphT.png')
 img = img.convert("RGBA")
 datas = img.getdata()
 
@@ -11,4 +11,4 @@ for item in datas:
         newData.append(item)
 
 img.putdata(newData)
-img.save("00.png", "PNG")
+img.save("graphT.png", "PNG")

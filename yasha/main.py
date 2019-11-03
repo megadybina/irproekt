@@ -906,7 +906,9 @@ async def on_message(message):
                          "obs_sen":"Wards placed",
                          "towerdmg_herodmg":"Hero/Building damage",
                          "permbuffs":"Permanent buffs",
-                         "adv_graph":"Teams' total gold and experience advantage graph"},
+                         "adv_graph":"Teams' total gold and experience advantage graph",
+                         'killed':'Killed heroes',
+                         'killed_by':'Killed by heroes'},
                          
                    "ru":{"bad_matchid":"Некорректный ID матча",
                          "error":"Возникла ошибка",
@@ -942,7 +944,9 @@ async def on_message(message):
                          "obs_sen":"Установлено вардов",
                          "towerdmg_herodmg":"Урона героям/постройкам",
                          "permbuffs":"Постоянные усиления",
-                         "adv_graph":"График преимущества сторон по общему количеству золота и опыта"}}
+                         "adv_graph":"График преимущества сторон по общему количеству золота и опыта",
+                         'killed':'Убийства героев',
+                         'killed_by':'Убит героями'}}
 
         variables={'od':{'radiant_win':'radiant_win',
                          "league_name":"name",
@@ -1076,7 +1080,7 @@ async def on_message(message):
                     color=discord.Colour(0xd0021b)
   
                 embed = discord.Embed(title=f'{phr["match"]} {matchid}',colour=color,url="https://discordapp.com")
-                embed.set_footer(text=f"{client.user.name} | {pref}matchinfo", icon_url=client.user.avatar_url_as(format='png'))
+                embed.set_footer(text=f"{client.user.name} | {pref}matchinfo | {strftime('%H:%M %d/%m/%y',gmtime(matchinfo['start_time']))} | {get_duration(matchinfo['duration'])}", icon_url=client.user.avatar_url_as(format='png'))
 
                 for guild in client.guilds:
                         if guild.id==594200720048259083:
@@ -1122,7 +1126,7 @@ async def on_message(message):
                 else:
                     radiant_embed_name=f'<:radiant:591631740435431465>{responses[f"{lang}"]["radiant_team"]}'+radwin
 
-
+                
                 if matchinfo.get(var['dire_team'],None)!=None:  #лого сил тьмы
                     ddire=matchinfo[var['dire_team']].get('name',phr["dire_team"])
                     if not stratz:
@@ -1159,7 +1163,7 @@ async def on_message(message):
                 radiant_hero_fields='__'+phr['rad_score']+": "+str(radscore)+'__\n'
                 dire_hero_fields='__'+phr['dire_score']+": "+str(direscore)+'__\n'
                 accounts_avail={}
-                
+                herocodes={}
                 for i in range(10):
                     if i==5:
                         embed.add_field(name=radiant_embed_name,value=radiant_hero_fields,inline=True)
@@ -1198,10 +1202,10 @@ async def on_message(message):
                         except:                           
                             pass
                                 
-                    
                     for hero in heroes:
                         herores=dict(eval(hero))
                         if heroid==herores['id']:
+                            herocodes[herores['shortname']]=f'<{herores["emoji"]}>'
                             heroinfo={}
                             heroinfo["id"]=herores["id"]
                             try:
@@ -1226,7 +1230,6 @@ async def on_message(message):
                                 dire_hero_fields+=hero_field_name
                                 dire_hero_fields+=hero_field_stats
                 embed.add_field(name=dire_embed_name,value=dire_hero_fields,inline=True)
-
                 #драфт и запреты
                 draft=matchinfo.get(var["picks_bans"],None)
                 if draft!=None:
@@ -1394,6 +1397,25 @@ async def on_message(message):
                                 xp=player['total_xp']
                                 obs=player['obs_placed']
                                 sen=player['sen_placed']
+                                killed=player['killed']
+                                killed_by=player['killed_by']
+                                killeds,killed_bys='',''
+                                count=0
+                                for entity in killed.keys():
+                                    if entity.replace('npc_dota_hero_','') in herocodes.keys():
+                                        killeds+=f"{herocodes[entity.replace('npc_dota_hero_','')]}: {killed[entity]} "
+                                        count+=1
+                                        if count==5:
+                                            killeds+='\n'
+                                            count=0
+                                for entity in killed_by.keys():
+                                    if entity.replace('npc_dota_hero_','') in herocodes.keys():
+                                        killed_bys+=f"{herocodes[entity.replace('npc_dota_hero_','')]}: {killed_by[entity]} "
+                                        count+=1
+                                        if count==5:
+                                            killeds+='\n'
+                                            count=0
+                                
                                 
                             embedhero.set_footer(text=f"{client.user.name} | {pref}matchinfo", icon_url=client.user.avatar_url_as(format='png'))
                             embedhero.add_field(name=f'<{emji}> **{embedhero_name}**',
@@ -1447,6 +1469,10 @@ async def on_message(message):
                                 if farm!={}:
                                     sources={'0':{'ru':'Прочее','en':'Other'},'1':{'ru':'Смерть','en':'Death'},'11':{'ru':'Постройки','en':'Buildings'},'12':{'ru':'Герои','en':'Heroes'},'13':{'ru':'Крипы','en':'Creeps'},'14':{'ru':'Рошан','en':'Roshan'},'6':{'ru':'Прочее','en':'Other'}}
                                     #for key in farm.keys():
+                            if killeds!='':
+                                embedhero.add_field(name=phr["killed"],value=killeds,inline=True)
+                            if killed_bys!='':
+                                embedhero.add_field(name=phr["killed_by"],value=killed_bys,inline=True)
                                         
 
 

@@ -310,8 +310,6 @@ def updateitems_no_als():  ##без прозвищ (например Black King 
                                     desc=re.sub(r'<(.+?)>','**',desc)
                                     nums_en=re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?",desc)
                                     res=''
-                                    if 'Dagon' in iteminfo['name']:
-                                        print(iteminfo['aliases'])
                                         n=int(iteminfo['aliases'][0][-1])-1
                                         dd=desc.index('$$')
                                         subs=desc[dd:].split('$')
